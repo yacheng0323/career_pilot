@@ -41,7 +41,12 @@ class SyncNotifier extends _$SyncNotifier {
 
   Future<void> sync() async {
     if (state.status == SyncStatus.syncing) return;
-    state = state.copyWith(status: SyncStatus.syncing);
+    // Reset error from previous attempt before starting
+    state = SyncState(
+      status: SyncStatus.syncing,
+      lastSyncTime: state.lastSyncTime,
+      jobsUpserted: state.jobsUpserted,
+    );
 
     try {
       final client = ref.read(apiClientProvider);
@@ -52,6 +57,7 @@ class SyncNotifier extends _$SyncNotifier {
         lastSyncTime: DateTime.now(),
         jobsUpserted: count,
       );
+      // Invalidate the entire jobListProvider family so all cached queries refresh
       ref.invalidate(jobListProvider);
     } on ApiException catch (e) {
       state = state.copyWith(
