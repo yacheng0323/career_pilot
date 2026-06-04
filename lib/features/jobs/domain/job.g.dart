@@ -16,6 +16,10 @@ _$JobImpl _$$JobImplFromJson(Map<String, dynamic> json) => _$JobImpl(
   skills: (json['skills'] as List<dynamic>).map((e) => e as String).toList(),
   description: json['description'] as String,
   source: json['source'] as String,
+  url: json['url'] as String?,
+  crawledAt: json['crawledAt'] == null
+      ? null
+      : DateTime.parse(json['crawledAt'] as String),
 );
 
 Map<String, dynamic> _$$JobImplToJson(_$JobImpl instance) => <String, dynamic>{
@@ -28,4 +32,6 @@ Map<String, dynamic> _$$JobImplToJson(_$JobImpl instance) => <String, dynamic>{
   'skills': instance.skills,
   'description': instance.description,
   'source': instance.source,
+  'url': instance.url,
+  'crawledAt': instance.crawledAt?.toIso8601String(),
 };

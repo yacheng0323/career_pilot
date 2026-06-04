@@ -15,6 +15,8 @@ class Job with _$Job {
     required List<String> skills,
     required String description,
     required String source,
+    String? url,
+    DateTime? crawledAt,
   }) = _Job;
 
   factory Job.fromJson(Map<String, dynamic> json) => _$JobFromJson(json);

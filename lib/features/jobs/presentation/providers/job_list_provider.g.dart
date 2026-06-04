@@ -6,7 +6,24 @@ part of 'job_list_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$jobListHash() => r'ad9c948b8906360a05174eacb948895a9488c100';
+String _$apiClientHash() => r'cdc65f44d0ec7d7c3a88a5d035707e0245b00546';
+
+/// See also [apiClient].
+@ProviderFor(apiClient)
+final apiClientProvider = Provider<ApiClient>.internal(
+  apiClient,
+  name: r'apiClientProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$apiClientHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ApiClientRef = ProviderRef<ApiClient>;
+String _$jobListHash() => r'ad82b1bd66146e684d0cdcf2188767a76a58f1f6';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,28 +46,16 @@ class _SystemHash {
   }
 }
 
-/// Fetches all jobs from the mock data source.
-/// [query] filters by title or company (case-insensitive); pass empty string for no filter.
-///
-/// Copied from [jobList].
+/// See also [jobList].
 @ProviderFor(jobList)
 const jobListProvider = JobListFamily();
 
-/// Fetches all jobs from the mock data source.
-/// [query] filters by title or company (case-insensitive); pass empty string for no filter.
-///
-/// Copied from [jobList].
+/// See also [jobList].
 class JobListFamily extends Family<AsyncValue<List<Job>>> {
-  /// Fetches all jobs from the mock data source.
-  /// [query] filters by title or company (case-insensitive); pass empty string for no filter.
-  ///
-  /// Copied from [jobList].
+  /// See also [jobList].
   const JobListFamily();
 
-  /// Fetches all jobs from the mock data source.
-  /// [query] filters by title or company (case-insensitive); pass empty string for no filter.
-  ///
-  /// Copied from [jobList].
+  /// See also [jobList].
   JobListProvider call({String query = ''}) {
     return JobListProvider(query: query);
   }
@@ -75,15 +80,9 @@ class JobListFamily extends Family<AsyncValue<List<Job>>> {
   String? get name => r'jobListProvider';
 }
 
-/// Fetches all jobs from the mock data source.
-/// [query] filters by title or company (case-insensitive); pass empty string for no filter.
-///
-/// Copied from [jobList].
+/// See also [jobList].
 class JobListProvider extends AutoDisposeFutureProvider<List<Job>> {
-  /// Fetches all jobs from the mock data source.
-  /// [query] filters by title or company (case-insensitive); pass empty string for no filter.
-  ///
-  /// Copied from [jobList].
+  /// See also [jobList].
   JobListProvider({String query = ''})
     : this._internal(
         (ref) => jobList(ref as JobListRef, query: query),

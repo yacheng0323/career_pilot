@@ -2,6 +2,26 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git 分支策略
+
+| 分支 | 用途 |
+|------|------|
+| `main` | 穩定版本，只接受來自 `dev` 的 merge |
+| `dev` | 主開發分支，所有 feature 從這裡分出、merge 回這裡 |
+| `feature/*` | 單一功能開發（e.g. `feature/plan-b-api-integration`） |
+
+```powershell
+# 開新 feature 分支
+git checkout dev
+git checkout -b feature/<name>
+
+# feature 完成後 merge 回 dev
+git checkout dev
+git merge --no-ff feature/<name>
+```
+
+---
+
 ## Superpowers Skills
 
 This project uses the [superpowers](https://github.com/obra/superpowers) methodology. Skills are located in `.claude/skills/`. **Before responding to any request, invoke the `using-superpowers` skill** to determine which skills apply.

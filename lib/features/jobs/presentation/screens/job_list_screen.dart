@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../sync/presentation/providers/sync_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/job_list_provider.dart';
 import '../widgets/job_card.dart';
@@ -56,6 +57,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
         centerTitle: false,
         elevation: 0,
         actions: [
+          const _SyncButton(),
           IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: '我的技能檔案',
@@ -293,4 +295,33 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       ),
     );
   }
+}
+
+class _SyncButton extends ConsumerWidget {
+  const _SyncButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(syncNotifierProvider);
+    final isSyncing = sync.status == SyncStatus.syncing;
+
+    return IconButton(
+      icon: isSyncing
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.sync),
+      tooltip: sync.lastSyncTime != null
+          ? '上次同步：${_formatTime(sync.lastSyncTime!)}'
+          : '同步職缺',
+      onPressed: isSyncing
+          ? null
+          : () => ref.read(syncNotifierProvider.notifier).sync(),
+    );
+  }
+
+  String _formatTime(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 }
