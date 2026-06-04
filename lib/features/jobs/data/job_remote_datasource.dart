@@ -12,7 +12,7 @@ class JobRemoteDataSource {
       if (query.isNotEmpty) 'q': query,
     };
     final data = await client.get('/api/v1/jobs', params: params);
-    final items = (data['items'] as List<dynamic>);
+    final items = (data['items'] as List<dynamic>?) ?? [];
     return items
         .map((e) => Job.fromJson(e as Map<String, dynamic>))
         .toList();
