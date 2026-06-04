@@ -75,7 +75,7 @@ if (-not $FlutterOnly) {
     $BackendProcess = Start-Process `
         -FilePath $VenvPython `
         -ArgumentList "-m uvicorn backend.main:app --port $BackendPort --reload" `
-        -WorkingDirectory $BackendDir `
+        -WorkingDirectory $ROOT `
         -PassThru `
         -NoNewWindow
 
