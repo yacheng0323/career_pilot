@@ -2,6 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Milestone Roadmap
+
+| Milestone | 狀態 | 主要功能 | 分支 |
+|-----------|------|---------|------|
+| **M1** | ✅ 完成 | Job List + Detail Screen，mock JSON，GoRouter，Riverpod | `main` |
+| **M2** | ✅ 完成 | 收藏（FavoriteNotifier）、應徵狀態、篩選 chips | `main` |
+| **M3** | ✅ 完成 | 進階篩選（技能/地點）、UserProfile、AI 摘要+匹配度（mock）| `main` |
+| **Backend** | ✅ 完成 | Python FastAPI + SQLite + Remotive/Arbeitnow 爬蟲 | `dev` |
+| **Plan B** | ✅ 完成 | Flutter 串接後端 API，ApiClient，SyncNotifier，mock fallback | `dev` |
+| **M4a** | 🔲 規劃中 | 台灣職缺（104 Playwright + Yourator）| `feature/m4a-taiwan-crawler` |
+| **M4b** | 🔲 規劃中 | UI 打磨（Skeleton/Dark mode）+ 真實 Claude AI | `feature/m4b-ui-ai` |
+| **M4c** | 🔲 未來 | 求職 Kanban（拖拉卡片、備忘錄、面試日期） | TBD |
+
+> Spec 文件：`docs/superpowers/specs/`
+> 實作計畫：`docs/superpowers/plans/`
+
+### M4 設計重點（已 brainstorm，待實作）
+
+**M4a — 台灣爬蟲**
+- `backend/crawlers/crawler_yourator.py`：httpx + Yourator 公開 JSON API
+- `backend/crawlers/crawler_104_pw.py`：Playwright headless 繞過 Cloudflare
+- 安裝：`pip install playwright && python -m playwright install chromium`
+
+**M4b — UI + AI**
+- Skeleton loader（`shimmer: ^3.0.0`）、Empty state、Pull-to-refresh
+- 深色模式：`AppTheme.dark` 跟隨系統
+- 真實 Claude AI：`--dart-define=CLAUDE_API_KEY=sk-ant-xxx`（現在 debug 預設 mock）
+- AI 結果 cache 到 SharedPreferences，避免重複呼叫
+
+---
+
 ## Git 分支策略
 
 | 分支 | 用途 |
@@ -133,11 +164,23 @@ backend/
 | GET | `/api/v1/sync/status` | 上次爬蟲時間與狀態 |
 | GET | `/health` | 健康檢查 |
 
+### 現有爬蟲
+
+| 爬蟲 | 來源 | 方法 | 狀態 |
+|------|------|------|------|
+| `crawler_remotive.py` | Remotive.com | httpx，公開 API | ✅ 正常，~96 筆/次 |
+| `crawler_arbeitnow.py` | Arbeitnow.com | httpx，公開 API | ✅ 正常，~100 筆/頁 |
+| `crawler_cake.py` | CakeResume | httpx（舊）| ❌ API 已 404，停用 |
+| `crawler_104.py` | 104 | httpx（舊）| ❌ Cloudflare 403，停用 |
+
+> M4a 計畫新增：`crawler_yourator.py`（httpx）+ `crawler_104_pw.py`（Playwright）
+
 ### 關鍵設計決策
 
-- **Skills filter** 是 Python-side post-DB filter（OR 邏輯）。大資料量時應改為 DB-side（Phase 2 技術債）。
-- **`_upsert_jobs`** 僅更新 title/description/salary_range/skills/crawled_at，不更新 location/company（Phase 2 技術債）。
-- **爬蟲排程**：APScheduler 每 6 小時執行，關鍵字：`["軟體", "工程師", "flutter", "backend"]`。
+- **爬蟲策略**：全量抓取，不做 keyword 過濾；篩選統一在 API query 層處理。
+- **Skills filter** 是 Python-side post-DB filter（OR 邏輯）。大資料量時應改為 DB-side（M4 技術債）。
+- **`_upsert_jobs`** 僅更新 title/description/salary_range/skills/crawled_at，不更新 location/company（技術債）。
+- **爬蟲排程**：APScheduler 每 6 小時執行。
 - **JobResponse** 使用 camelCase（`isRemote`, `salaryRange`, `crawledAt`）對應 Flutter Freezed model。
 
 ### Backend 測試
@@ -219,9 +262,27 @@ FastAPI Backend (localhost:8000)
 | `/jobs/:id` | `JobDetailScreen` |
 | `/profile` | `ProfileScreen` |
 
+### M4b 待實作（UI + AI）
+
+```
+lib/features/jobs/presentation/widgets/
+└── job_card_skeleton.dart   # Skeleton loader（shimmer 動畫）
+
+lib/core/theme/app_theme.dart
+└── AppTheme.dark            # 深色模式 ThemeData
+
+依賴新增：
+  shimmer: ^3.0.0            # skeleton shimmer
+```
+
 ### AI service (`lib/core/ai/ai_service.dart`)
 
 `AiService` defaults to **mock mode** when `kDebugMode == true` (i.e. every `flutter run` without `--release`). Mock mode calculates match score from skill overlap without any network call. Pass `CLAUDE_API_KEY` via `--dart-define` to enable real Claude API calls in any build mode.
+
+**M4b 計畫改動：**
+- 有 `CLAUDE_API_KEY` 時無論 debug/release 都使用真實 API
+- 加入 retry（最多 2 次）+ 10 秒 timeout
+- 分析結果 cache 到 SharedPreferences（key: `ai_analysis_{jobId}`），避免重複呼叫
 
 ### Code generation
 
