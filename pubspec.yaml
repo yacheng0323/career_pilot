@@ -28,8 +28,7 @@ dependencies:
   # HTTP client for AI API calls
   http: ^1.2.2
 
-  # (Reserved for future API)
-  # dio: ^5.7.0
+  dio: ^5.8.0
 
 dev_dependencies:
   flutter_test:
