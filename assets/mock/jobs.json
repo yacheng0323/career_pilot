@@ -1,0 +1,68 @@
+[
+  {
+    "id": "job_001",
+    "title": "Flutter 工程師",
+    "company": "AppWorks Lab",
+    "location": "台北市",
+    "isRemote": false,
+    "salaryRange": "70K–100K",
+    "skills": ["Flutter", "Dart", "Riverpod", "Firebase"],
+    "description": "負責開發與維護公司旗艦行動應用程式，與後端團隊協作串接 RESTful API，並持續優化 App 效能與使用者體驗。需熟悉 Flutter 狀態管理（Riverpod 或 BLoC），具備撰寫 Widget 測試的能力。",
+    "source": "104"
+  },
+  {
+    "id": "job_002",
+    "title": "Senior iOS Engineer",
+    "company": "TechCorp Taiwan",
+    "location": "新北市",
+    "isRemote": true,
+    "salaryRange": "100K–140K",
+    "skills": ["Swift", "SwiftUI", "Combine", "XCTest"],
+    "description": "Join our mobile team to build next-generation iOS features for our fintech product. You will own features end-to-end from design review to App Store release. Strong knowledge of Swift concurrency and UIKit/SwiftUI hybrid architecture required.",
+    "source": "LinkedIn"
+  },
+  {
+    "id": "job_003",
+    "title": "前端工程師（React）",
+    "company": "新創電商平台",
+    "location": "台中市",
+    "isRemote": true,
+    "salaryRange": "60K–85K",
+    "skills": ["React", "TypeScript", "Next.js", "Tailwind CSS"],
+    "description": "加入快速成長的電商團隊，負責開發高效能購物頁面與結帳流程。與設計師密切合作，確保 UI 一致性，同時維護良好的前端測試覆蓋率。歡迎有 SEO 優化與 Core Web Vitals 調校經驗者。",
+    "source": "CakeResume"
+  },
+  {
+    "id": "job_004",
+    "title": "後端工程師（Go）",
+    "company": "CloudBase Inc.",
+    "location": "遠端",
+    "isRemote": true,
+    "salaryRange": "90K–130K",
+    "skills": ["Go", "PostgreSQL", "Docker", "Kubernetes", "gRPC"],
+    "description": "Design and implement high-throughput microservices handling millions of daily events. You will work on data pipelines, API gateway design, and distributed tracing. Experience with cloud-native infrastructure (AWS/GCP) and observability tooling is a plus.",
+    "source": "LinkedIn"
+  },
+  {
+    "id": "job_005",
+    "title": "Android 工程師",
+    "company": "行動支付新創",
+    "location": "台北市",
+    "isRemote": false,
+    "salaryRange": "65K–95K",
+    "skills": ["Kotlin", "Jetpack Compose", "Room", "Retrofit", "Hilt"],
+    "description": "開發金融級 Android 應用程式，實作 NFC 支付流程與生物辨識登入功能。需熟悉 Android 架構元件（ViewModel、LiveData / Flow），具備 ProGuard 混淆與 APK 瘦身經驗尤佳。",
+    "source": "1111"
+  },
+  {
+    "id": "job_006",
+    "title": "全端工程師",
+    "company": "SaaS 新創 Unicorn",
+    "location": "台北市",
+    "isRemote": true,
+    "salaryRange": "80K–120K",
+    "skills": ["Node.js", "React", "TypeScript", "MongoDB", "AWS"],
+    "description": "作為小而精的全端工程師，你將同時負責前端 React dashboard 與後端 Node.js API 的開發。我們的產品服務中小企業的 HR 管理需求，期待你能主動提出技術改善方案並快速落地。",
+    "source": "CakeResume"
+  }
+]
