@@ -8,6 +8,10 @@ class UserProfile with _$UserProfile {
   const factory UserProfile({
     @Default([]) List<String> skills,
     @Default('') String name,
+    @Default('') String bio,
+    String? avatarPath,
+    @Default('') String expectedSalary,
+    @Default('') String expectedLocation,
   }) = _UserProfile;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>
