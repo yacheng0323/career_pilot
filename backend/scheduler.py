@@ -5,10 +5,18 @@ from sqlmodel import Session, select
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from backend.database import engine
 from backend.models.job import Job, JobCreate
-from backend.crawlers.crawler_remotive import RemotiveCrawler
-from backend.crawlers.crawler_arbeitnow import ArbeitnowCrawler
-from backend.crawlers.crawler_yourator import CrawlerYourator
-from backend.crawlers.crawler_104_cffi import Crawler104Cffi
+# Lazy imports to prevent startup failures on cloud (e.g. curl_cffi not available)
+def _get_crawlers():
+    from backend.crawlers.crawler_remotive import RemotiveCrawler
+    from backend.crawlers.crawler_arbeitnow import ArbeitnowCrawler
+    from backend.crawlers.crawler_yourator import CrawlerYourator
+    crawlers = [RemotiveCrawler(), ArbeitnowCrawler(), CrawlerYourator()]
+    try:
+        from backend.crawlers.crawler_104_cffi import Crawler104Cffi
+        crawlers.append(Crawler104Cffi())
+    except Exception:
+        pass  # curl_cffi not available on this platform
+    return crawlers
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +34,7 @@ def get_sync_status() -> dict:
 
 async def run_all_crawlers(keywords: list[str] | None = None) -> int:
     global _last_sync, _last_sync_count
-    crawlers = [RemotiveCrawler(), ArbeitnowCrawler(), CrawlerYourator(), Crawler104Cffi()]
+    crawlers = _get_crawlers()
     all_jobs: list[JobCreate] = []
 
     for crawler in crawlers:
