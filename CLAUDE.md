@@ -122,6 +122,23 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000 `
 
 ---
 
+## VSCode 啟動設定（.vscode/launch.json）
+
+在 VSCode 按 **F5** 或側邊欄 **Run & Debug** 選擇：
+
+| 設定名稱 | 說明 |
+|---------|------|
+| **Backend (FastAPI)** | 啟動後端，自動使用 `backend/.venv`，無需手動 activate |
+| **Flutter (Android Emulator)** | 啟動 Flutter，API 指向 `10.0.2.2:8000` |
+| **Flutter (Web)** | 啟動 Flutter Web，API 指向 `localhost:8000` |
+| **Backend Tests (pytest)** | 執行後端 29 tests |
+| **Full Stack (Backend + Flutter Android)** | Compound：同時啟動後端 + Flutter |
+
+> VSCode 會自動識別 `backend/.venv/Scripts/python.exe`（`.vscode/settings.json` 已設定），
+> 不需要在 terminal 手動 `Activate.ps1`。
+
+---
+
 ## 一鍵啟動腳本（dev.ps1）
 
 ```powershell
