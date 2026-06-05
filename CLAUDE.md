@@ -39,7 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **M4a** | ✅ 完成 | 台灣職缺：Yourator (httpx) + **104 (curl_cffi)**，29 後端 tests | `dev` |
 | **M4b** | ✅ 完成 | Skeleton loader、深色模式、Empty state、Pull-to-refresh、真實 Claude AI | `dev` |
 | **M5a** | ✅ 完成 | 4-Tab BottomNavBar、分頁 Infinite Scroll、Kanban 追蹤、完整 Profile | `dev` |
-| **M5b** | 🔲 規劃中 | 首頁 Swipe 卡片流（flutter_card_swiper）| TBD |
+| **M5b** | ✅ 完成 | 首頁 Swipe 卡片流（右滑收藏/左滑跳過）、SwipeJobCard | `dev` |
 | **M4c** | 🔲 未來 | 備忘錄、面試日期提醒（整合進 M5+ Kanban）| TBD |
 
 > Spec 文件：`docs/superpowers/specs/`
@@ -370,11 +370,14 @@ JobListScreen (ConsumerStatefulWidget)
 | 元件 | 路徑 | 說明 |
 |------|------|------|
 | `MainShell` | `lib/app/shell/main_shell.dart` | `NavigationBar` 殼，4 個 tab |
-| `HomeScreen` | `lib/features/home/presentation/screens/` | 暫時版（最新 10 筆）|
+| `HomeScreen` | `lib/features/home/presentation/screens/` | Swipe 卡片流（M5b，flutter_card_swiper）|
+| `SwipeJobCard` | `lib/features/home/presentation/widgets/` | 大張卡片（source badge、技能、描述）|
+| `SwipeJobDeck` | `lib/features/home/presentation/providers/` | Riverpod 卡片池（15 張循環）|
 | `ExploreScreen` | `lib/features/jobs/presentation/screens/` | 分頁職缺列表，Infinite Scroll |
 | `TrackerScreen` | `lib/features/tracker/presentation/screens/` | Kanban 4 欄，DragTarget |
 | `ProfileScreen` | `lib/features/profile/presentation/screens/` | 頭像/名字/bio/技能/統計/設定 |
 | `JobListPaginatedNotifier` | `lib/features/jobs/presentation/providers/` | 分頁 Riverpod notifier，每頁 20 筆 |
+| `SwipeJobDeck` | `lib/features/home/presentation/providers/` | 卡片池（15 張），右滑→收藏，左滑→跳過 |
 
 ### 路由架構（M5a 後）
 
