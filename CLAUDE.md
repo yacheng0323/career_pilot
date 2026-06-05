@@ -11,8 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **M3** | ✅ 完成 | 進階篩選（技能/地點）、UserProfile、AI 摘要+匹配度（mock）| `main` |
 | **Backend** | ✅ 完成 | Python FastAPI + SQLite + Remotive/Arbeitnow 爬蟲 | `dev` |
 | **Plan B** | ✅ 完成 | Flutter 串接後端 API，ApiClient，SyncNotifier，mock fallback | `dev` |
-| **M4a** | 🔲 規劃中 | 台灣職缺（104 Playwright + Yourator）| `feature/m4a-taiwan-crawler` |
-| **M4b** | 🔲 規劃中 | UI 打磨（Skeleton/Dark mode）+ 真實 Claude AI | `feature/m4b-ui-ai` |
+| **M4a** | 🔲 進行中 | 台灣職缺（104 Playwright + Yourator）| `feature/m4a-taiwan-crawler` |
+| **M4b** | ✅ 完成 | Skeleton loader、深色模式、Empty state、Pull-to-refresh、真實 Claude AI | `dev` |
 | **M4c** | 🔲 未來 | 求職 Kanban（拖拉卡片、備忘錄、面試日期） | TBD |
 
 > Spec 文件：`docs/superpowers/specs/`
@@ -25,11 +25,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `backend/crawlers/crawler_104_pw.py`：Playwright headless 繞過 Cloudflare
 - 安裝：`pip install playwright && python -m playwright install chromium`
 
-**M4b — UI + AI**
-- Skeleton loader（`shimmer: ^3.0.0`）、Empty state、Pull-to-refresh
-- 深色模式：`AppTheme.dark` 跟隨系統
-- 真實 Claude AI：`--dart-define=CLAUDE_API_KEY=sk-ant-xxx`（現在 debug 預設 mock）
-- AI 結果 cache 到 SharedPreferences，避免重複呼叫
+**M4b — UI + AI（✅ 已完成）**
+- `shimmer: ^3.0.0` — JobCardSkeleton（6 張 placeholder cards 在載入時顯示）
+- `AppTheme.dark` — 深色模式，`ThemeMode.system` 跟隨裝置設定
+- `_EmptyState` widget — 無資料時顯示插圖 + 說明 + 立即同步按鈕
+- Pull-to-refresh — `RefreshIndicator` 包住 `ListView`
+- `AiService` — `useMock = apiKey.isEmpty`，有 key 時自動用真實 Claude API
 
 ---
 
@@ -147,8 +148,10 @@ backend/
 │   └── sync.py              # POST /api/v1/sync, GET /api/v1/sync/status
 ├── crawlers/
 │   ├── base.py              # BaseCrawler ABC（make_id, _sleep 1-3s）
-│   ├── crawler_cake.py      # CakeResume（httpx, Phase 1）
-│   └── crawler_104.py       # 104（httpx + detail API, Phase 1）
+│   ├── crawler_remotive.py  # Remotive.com（httpx, 公開 API）✅
+│   ├── crawler_arbeitnow.py # Arbeitnow.com（httpx, 公開 API）✅
+│   ├── crawler_cake.py      # CakeResume（舊，API 404，停用）❌
+│   └── crawler_104.py       # 104（舊，Cloudflare 403，停用）❌
 ├── requirements.txt         # runtime deps
 ├── requirements-dev.txt     # runtime + pytest/respx/pytest-asyncio
 └── tests/                   # pytest, 20 tests
@@ -224,29 +227,23 @@ lib/
             └── screens/   # ProfileScreen (/profile)
 ```
 
-### Data flow（現況 M1–M3，mock JSON）
-
-```
-assets/mock/jobs.json
-    → JobRepository (rootBundle)
-    → jobListProvider (Riverpod FutureProvider)
-    → JobListScreen (ConsumerStatefulWidget)
-        → tap → GoRouter /jobs/:id → JobDetailScreen
-            → _aiAnalysisProvider (FutureProvider.family)
-                → AiService.analyze(jobSkills, userSkills)
-```
-
-### Data flow（Plan B 完成後，真實 API）
+### Data flow（現況，真實 API + mock fallback）
 
 ```
 FastAPI Backend (localhost:8000)
-    → api_client.dart (Dio)
-    → JobRemoteDataSource
-    → JobRepository（API 優先，失敗 fallback mock JSON）
-    → jobListProvider → UI（同上）
+    → ApiClient (Dio, lib/core/network/api_client.dart)
+    → JobRemoteDataSource (lib/features/jobs/data/job_remote_datasource.dart)
+    → JobRepository — API 優先，ApiException 時 fallback mock JSON
+    → jobListProvider (Riverpod, @riverpod)
+    → JobListScreen (ConsumerStatefulWidget)
+        ├── 載入中 → JobCardSkeleton × 6（shimmer）
+        ├── 無資料 → _EmptyState（立即同步按鈕）
+        └── tap → GoRouter /jobs/:id → JobDetailScreen
+                    → _aiAnalysisProvider (FutureProvider.family)
+                        → AiService.analyze(jobSkills, userSkills)
+                            ├── apiKey 空  → mock（技能 overlap 計算）
+                            └── apiKey 非空 → 真實 Claude API
 ```
-
-> **Plan B 尚未實作**：`lib/core/network/api_client.dart`、`job_remote_datasource.dart`、sync UI button 都還未建立。
 
 ### State management patterns
 
@@ -262,27 +259,34 @@ FastAPI Backend (localhost:8000)
 | `/jobs/:id` | `JobDetailScreen` |
 | `/profile` | `ProfileScreen` |
 
-### M4b 待實作（UI + AI）
+### UI 元件（M4b 已完成）
 
 ```
 lib/features/jobs/presentation/widgets/
-└── job_card_skeleton.dart   # Skeleton loader（shimmer 動畫）
+└── job_card_skeleton.dart   # Shimmer skeleton（6 張 placeholder，深/淺色自適應）
 
 lib/core/theme/app_theme.dart
-└── AppTheme.dark            # 深色模式 ThemeData
+├── AppTheme.light           # 淺色 ThemeData
+└── AppTheme.dark            # 深色 ThemeData（M4b 新增）
 
-依賴新增：
-  shimmer: ^3.0.0            # skeleton shimmer
+lib/app/app.dart
+└── themeMode: ThemeMode.system   # 跟隨裝置深/淺色設定（M4b 新增）
 ```
 
 ### AI service (`lib/core/ai/ai_service.dart`)
 
-`AiService` defaults to **mock mode** when `kDebugMode == true` (i.e. every `flutter run` without `--release`). Mock mode calculates match score from skill overlap without any network call. Pass `CLAUDE_API_KEY` via `--dart-define` to enable real Claude API calls in any build mode.
+判斷邏輯：`useMock = useMock ?? apiKey.isEmpty`
 
-**M4b 計畫改動：**
-- 有 `CLAUDE_API_KEY` 時無論 debug/release 都使用真實 API
-- 加入 retry（最多 2 次）+ 10 秒 timeout
-- 分析結果 cache 到 SharedPreferences（key: `ai_analysis_{jobId}`），避免重複呼叫
+| 情況 | 行為 |
+|------|------|
+| `CLAUDE_API_KEY` 未傳（空字串）| mock mode（技能 overlap 計算，0 費用）|
+| `CLAUDE_API_KEY=sk-ant-xxx` 傳入 | 真實 Claude API（`claude-3-5-haiku-20241022`）|
+
+```powershell
+# 啟用真實 AI
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000 `
+            --dart-define=CLAUDE_API_KEY=sk-ant-xxxxx
+```
 
 ### Code generation
 
@@ -298,17 +302,23 @@ Trigger re-generation whenever you add/change a `@freezed` class or `@riverpod` 
 
 ### Flutter（`test/`）
 
-| File | What it covers |
-|------|----------------|
-| `widget_test.dart` | `SkillChip` + `JobCard` widget rendering (M1) |
-| `m2_widget_test.dart` | `FavoriteNotifier` + `ApplyStatusNotifier` unit tests (M2) |
-| `m3_test.dart` | Filter logic, `AiService` mock, `UserProfileNotifier` (M3) |
+| File | Tests | What it covers |
+|------|-------|----------------|
+| `widget_test.dart` | 6 | `SkillChip` + `JobCard` widget rendering (M1) |
+| `m2_widget_test.dart` | 8 | `FavoriteNotifier` + `ApplyStatusNotifier` (M2) |
+| `m3_test.dart` | 16 | Filter logic, `AiService` mock, `UserProfileNotifier` (M3) |
+| `api_client_test.dart` | 4 | `ApiClient` baseUrl + `ApiException` (Plan B) |
+| `job_repository_test.dart` | 3 | Remote datasource + fallback logic (Plan B) |
+| `m4b_test.dart` | 8 | `AppTheme.dark` + `AiService` key 判斷 (M4b) |
+| **Total** | **45** | |
 
-All provider tests use `ProviderContainer` + `SharedPreferences.setMockInitialValues({})` — no Flutter widget pump needed.
+All provider tests use `ProviderContainer` + `SharedPreferences.setMockInitialValues({})`.
 
 ```powershell
-# Flutter: 30 tests
-$env:PATH = "D:\flutter\bin;$env:PATH"; flutter test
+# Flutter: 45 tests
+$env:PATH = "D:\flutter\bin;$env:PATH"
+cd C:\dev\career_pilot
+flutter test
 ```
 
 ### Backend（`backend/tests/`）
