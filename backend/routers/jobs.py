@@ -15,7 +15,7 @@ def list_jobs(
     skills: str | None = Query(None),
     source: str | None = Query(None),
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=500),
     session: Session = Depends(get_session),
 ):
     stmt = select(Job)
