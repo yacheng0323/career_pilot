@@ -38,7 +38,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **Plan B** | ✅ 完成 | Flutter 串接後端 API，ApiClient (Dio)，SyncNotifier，mock fallback | `dev` |
 | **M4a** | ✅ 完成 | 台灣職缺：Yourator (httpx) + **104 (curl_cffi)**，29 後端 tests | `dev` |
 | **M4b** | ✅ 完成 | Skeleton loader、深色模式、Empty state、Pull-to-refresh、真實 Claude AI | `dev` |
-| **M4c** | 🔲 未來 | 求職 Kanban（拖拉卡片、備忘錄、面試日期提醒）| TBD |
+| **M5a** | ✅ 完成 | 4-Tab BottomNavBar、分頁 Infinite Scroll、Kanban 追蹤、完整 Profile | `dev` |
+| **M5b** | 🔲 規劃中 | 首頁 Swipe 卡片流（flutter_card_swiper）| TBD |
+| **M4c** | 🔲 未來 | 備忘錄、面試日期提醒（整合進 M5+ Kanban）| TBD |
 
 > Spec 文件：`docs/superpowers/specs/`
 > 實作計畫：`docs/superpowers/plans/`
@@ -362,6 +364,32 @@ JobListScreen (ConsumerStatefulWidget)
 > ```powershell
 > dart run build_runner build --delete-conflicting-outputs
 > ```
+
+### M5a 新增頁面與功能
+
+| 元件 | 路徑 | 說明 |
+|------|------|------|
+| `MainShell` | `lib/app/shell/main_shell.dart` | `NavigationBar` 殼，4 個 tab |
+| `HomeScreen` | `lib/features/home/presentation/screens/` | 暫時版（最新 10 筆）|
+| `ExploreScreen` | `lib/features/jobs/presentation/screens/` | 分頁職缺列表，Infinite Scroll |
+| `TrackerScreen` | `lib/features/tracker/presentation/screens/` | Kanban 4 欄，DragTarget |
+| `ProfileScreen` | `lib/features/profile/presentation/screens/` | 頭像/名字/bio/技能/統計/設定 |
+| `JobListPaginatedNotifier` | `lib/features/jobs/presentation/providers/` | 分頁 Riverpod notifier，每頁 20 筆 |
+
+### 路由架構（M5a 後）
+
+```
+GoRouter initialLocation: /home
+
+StatefulShellRoute（MainShell — BottomNavBar）
+├── /home       HomeScreen
+├── /explore    ExploreScreen（分頁，Infinite Scroll）
+├── /tracker    TrackerScreen（Kanban 看板）
+└── /profile    ProfileScreen（完整個人資料）
+
+Full-screen（覆蓋 NavBar）
+└── /jobs/:id   JobDetailScreen
+```
 
 ### Source Badge 顏色對應
 
