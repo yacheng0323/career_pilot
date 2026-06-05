@@ -346,6 +346,24 @@ JobListScreen (ConsumerStatefulWidget)
 > dart run build_runner build --delete-conflicting-outputs
 > ```
 
+### Source Badge 顏色對應
+
+`lib/features/jobs/presentation/widgets/job_card.dart` — `_SourceBadge`
+
+| source 值 | 顯示名稱 | 顏色 |
+|-----------|---------|------|
+| `104` | 104人力銀行 | 橘 `#FF6B00` |
+| `yourator` | Yourator | 青綠 `#00A86B` |
+| `remotive` | Remotive | 紫 `#7C3AED` |
+| `arbeitnow` | Arbeitnow | 藍 `#2563EB` |
+| 其他 | 原始值 | colorScheme.primary |
+
+### Job 排列策略（JobRemoteDataSource）
+
+- **無搜尋時**：`_interleave()` Round-robin 各來源輪流排列，各平台均勻出現
+- **有搜尋詞時**：維持後端回傳順序（相關性優先）
+- fetch pool = 300 筆（確保各來源有足夠職缺參與輪替）
+
 ### AI Service
 
 `lib/core/ai/ai_service.dart`
