@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **M3** | ✅ 完成 | 進階篩選（技能/地點）、UserProfile、AI 摘要+匹配度（mock）| `main` |
 | **Backend** | ✅ 完成 | Python FastAPI + SQLite + Remotive/Arbeitnow 爬蟲 | `dev` |
 | **Plan B** | ✅ 完成 | Flutter 串接後端 API，ApiClient，SyncNotifier，mock fallback | `dev` |
-| **M4a** | 🔲 進行中 | 台灣職缺（104 Playwright + Yourator）| `feature/m4a-taiwan-crawler` |
+| **M4a** | ✅ 完成 | 台灣職缺（104 Playwright + Yourator）| `feature/m4a-taiwan-crawler` |
 | **M4b** | ✅ 完成 | Skeleton loader、深色模式、Empty state、Pull-to-refresh、真實 Claude AI | `dev` |
 | **M4c** | 🔲 未來 | 求職 Kanban（拖拉卡片、備忘錄、面試日期） | TBD |
 
@@ -173,7 +173,7 @@ backend/
 |------|------|------|------|
 | `crawler_remotive.py` | Remotive.com | httpx，公開 API | ✅ 正常，~96 筆/次（英文遠端）|
 | `crawler_arbeitnow.py` | Arbeitnow.com | httpx，公開 API | ✅ 正常，~100 筆/頁（英文）|
-| `crawler_yourator.py` | Yourator.co | httpx，`api/v4/jobs` | 🔲 M4a 實作中（台灣中文）|
+| `crawler_yourator.py` | Yourator.co | httpx，`api/v4/jobs` | ✅ 正常，~100 筆/次（台灣中文）|
 | `crawler_cake.py` | CakeResume | httpx（舊）| ❌ API 已 404，停用 |
 | `crawler_104.py` | 104 | httpx（舊）| ❌ Cloudflare 403，停用 |
 
