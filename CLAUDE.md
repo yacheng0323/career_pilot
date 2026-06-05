@@ -4,6 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## ⚠️ 重要規則（Claude 每次讀取此檔案都必須遵守）
+
+> **每當有任何重大變更、新功能、修改、新增、刪除時，Claude 必須：**
+>
+> 1. **建立或更新對應的文件**
+>    - 新 spec → `docs/superpowers/specs/YYYY-MM-DD-<topic>.md`
+>    - 新實作計畫 → `docs/superpowers/plans/YYYY-MM-DD-<feature>.md`
+>    - 研究記錄 → `docs/superpowers/specs/YYYY-MM-DD-<topic>-research.md`
+>
+> 2. **更新 `CLAUDE.md`（本檔案）**
+>    - Milestone Roadmap 狀態更新（🔲 → ✅）
+>    - 新爬蟲 / 新 API / 新架構 → 補充到對應章節
+>    - 測試數量變動 → 更新 Testing 表格
+>    - 技術決策 → 補充到「關鍵設計決策」或「已知技術債」
+>
+> 3. **Commit 文件變更**（不要讓文件落後於程式碼）
+>
+> **適用場景：** 新功能、爬蟲新增/停用、API 發現、架構調整、測試新增、技術債確認、Milestone 完成。
+>
+> **不適用場景：** 單行 bug fix、typo 修正、格式調整。
+
+---
+
 ## Milestone Roadmap
 
 | Milestone | 狀態 | 主要功能 | 合入分支 |
