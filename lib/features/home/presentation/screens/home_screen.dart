@@ -111,59 +111,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(40, 12, 40, 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _ActionButton(
-                  onTap: () => _swiperController.swipe(CardSwiperDirection.left),
-                  icon: Icons.close_rounded,
-                  color: Colors.grey,
-                  size: 56,
-                ),
-                _ActionButton(
-                  onTap: () => _swiperController.swipe(CardSwiperDirection.right),
-                  icon: Icons.favorite_rounded,
-                  color: Colors.pink,
-                  size: 68,
-                  filled: true,
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 16),
         ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.onTap, required this.icon,
-    required this.color, required this.size, this.filled = false,
-  });
-  final VoidCallback onTap;
-  final IconData icon;
-  final Color color;
-  final double size;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size, height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: filled ? color : Colors.white,
-          boxShadow: [BoxShadow(
-            color: color.withValues(alpha: 0.3), blurRadius: 12,
-            offset: const Offset(0, 4))],
-          border: filled ? null : Border.all(color: color.withValues(alpha: 0.4), width: 2),
-        ),
-        child: Icon(icon, color: filled ? Colors.white : color, size: size * 0.44),
       ),
     );
   }
