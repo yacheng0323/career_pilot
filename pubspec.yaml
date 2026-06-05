@@ -30,6 +30,9 @@ dependencies:
   shimmer: ^3.0.0
 
   dio: ^5.8.0
+  appflowy_board: ^0.1.2
+  image_picker: ^1.2.2
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
