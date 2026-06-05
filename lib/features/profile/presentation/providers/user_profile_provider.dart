@@ -35,6 +35,26 @@ class UserProfileNotifier extends _$UserProfileNotifier {
     await _save(profile.copyWith(name: name));
   }
 
+  Future<void> setBio(String bio) async {
+    final profile = await future;
+    await _save(profile.copyWith(bio: bio));
+  }
+
+  Future<void> setAvatarPath(String path) async {
+    final profile = await future;
+    await _save(profile.copyWith(avatarPath: path));
+  }
+
+  Future<void> setExpectedSalary(String salary) async {
+    final profile = await future;
+    await _save(profile.copyWith(expectedSalary: salary));
+  }
+
+  Future<void> setExpectedLocation(String location) async {
+    final profile = await future;
+    await _save(profile.copyWith(expectedLocation: location));
+  }
+
   Future<void> _save(UserProfile updated) async {
     final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.setString(_key, jsonEncode(updated.toJson()));
