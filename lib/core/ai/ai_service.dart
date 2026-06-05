@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// AI 摘要與匹配度分析結果
@@ -24,7 +23,7 @@ class AiJobAnalysis {
 /// 設定 [useMock] = true（預設 debug 模式）可跳過真實 API 呼叫。
 class AiService {
   AiService({required this.apiKey, bool? useMock})
-      : useMock = useMock ?? kDebugMode;
+      : useMock = useMock ?? apiKey.isEmpty;
 
   final String apiKey;
   final bool useMock;
