@@ -8,7 +8,11 @@ from backend.scheduler import create_scheduler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        import logging
+        logging.warning(f"DB init warning: {e}. App will retry on first request.")
     scheduler = create_scheduler()
     scheduler.start()
     yield
