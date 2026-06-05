@@ -171,12 +171,33 @@ backend/
 
 | 爬蟲 | 來源 | 方法 | 狀態 |
 |------|------|------|------|
-| `crawler_remotive.py` | Remotive.com | httpx，公開 API | ✅ 正常，~96 筆/次 |
-| `crawler_arbeitnow.py` | Arbeitnow.com | httpx，公開 API | ✅ 正常，~100 筆/頁 |
+| `crawler_remotive.py` | Remotive.com | httpx，公開 API | ✅ 正常，~96 筆/次（英文遠端）|
+| `crawler_arbeitnow.py` | Arbeitnow.com | httpx，公開 API | ✅ 正常，~100 筆/頁（英文）|
+| `crawler_yourator.py` | Yourator.co | httpx，`api/v4/jobs` | 🔲 M4a 實作中（台灣中文）|
 | `crawler_cake.py` | CakeResume | httpx（舊）| ❌ API 已 404，停用 |
 | `crawler_104.py` | 104 | httpx（舊）| ❌ Cloudflare 403，停用 |
 
-> M4a 計畫新增：`crawler_yourator.py`（httpx）+ `crawler_104_pw.py`（Playwright）
+### 台灣爬蟲探測記錄（M4a）
+
+| 平台 | 嘗試方法 | 結果 |
+|------|---------|------|
+| **Yourator** | httpx `api/v4/jobs?page=N` | ✅ 確認可用，20 筆/頁 |
+| **104** | httpx 直接呼叫 | ❌ Cloudflare 403 |
+| **104** | Playwright headless | ❌ bot 偵測，刻意回傳 0 筆 |
+| **104** | Playwright stealth | ❌ 仍被偵測 |
+| **meet.jobs** | httpx | ❌ 回傳 HTML |
+
+> **104 技術債：** headless 永遠回傳 0 筆，非 CAPTCHA，是 TLS fingerprint 偵測。
+> 未來方案：residential proxy + 真實 Chrome session。
+
+### Yourator API 格式
+
+```
+GET https://www.yourator.co/api/v4/jobs?page=1&per_page=20
+Response: {"payload": {"hasMore": true, "nextPage": 2, "jobs": [{...}]}}
+Job fields: id, name, path, salary, location, tags, company.brand
+URL: https://www.yourator.co{job.path}
+```
 
 ### 關鍵設計決策
 
