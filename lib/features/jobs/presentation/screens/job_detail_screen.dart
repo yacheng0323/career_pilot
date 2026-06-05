@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/ai/ai_service.dart';
 import '../providers/apply_status_provider.dart';
@@ -21,13 +24,40 @@ final _aiAnalysisProvider = FutureProvider.family<AiJobAnalysis, String>(
     final job = jobs.firstWhere((j) => j.id == jobId);
     final profile = await ref.watch(userProfileNotifierProvider.future);
     final service = ref.read(_aiServiceProvider);
-    return service.analyze(
+
+    // Cache key: jobId + user skills fingerprint
+    final cacheKey = 'ai_cache_${jobId}_${profile.skills.join(',')}';
+    final prefs = await ref.watch(sharedPreferencesProvider.future);
+    final cached = prefs.getString(cacheKey);
+    if (cached != null) {
+      try {
+        // dart:convert already imported at top
+        final map = jsonDecode(cached) as Map<String, dynamic>;
+        return AiJobAnalysis(
+          summaryBullets: (map['bullets'] as List).cast<String>(),
+          matchScore: map['score'] as int,
+          matchReason: map['reason'] as String,
+        );
+      } catch (_) { /* cache corrupt, re-analyze */ }
+    }
+
+    final result = await service.analyze(
       jobTitle: job.title,
       company: job.company,
       description: job.description,
       jobSkills: job.skills,
       userSkills: profile.skills,
     );
+
+    // Store to cache
+    // dart:convert already imported at top
+    await prefs.setString(cacheKey, jsonEncode({
+      'bullets': result.summaryBullets,
+      'score': result.matchScore,
+      'reason': result.matchReason,
+    }));
+
+    return result;
   },
 );
 
@@ -142,6 +172,24 @@ class JobDetailScreen extends ConsumerWidget {
                   style: textTheme.bodyMedium?.copyWith(height: 1.6),
                 ),
                 const SizedBox(height: 32),
+
+                // ── 前往投遞 ─────────────────────────────────
+                if (job.url != null && job.url!.isNotEmpty)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        final uri = Uri.tryParse(job.url!);
+                        if (uri != null && await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('前往投遞'),
+                    ),
+                  ),
+                const SizedBox(height: 24),
               ],
             ),
           );
