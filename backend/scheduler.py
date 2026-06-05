@@ -8,6 +8,7 @@ from backend.models.job import Job, JobCreate
 from backend.crawlers.crawler_remotive import RemotiveCrawler
 from backend.crawlers.crawler_arbeitnow import ArbeitnowCrawler
 from backend.crawlers.crawler_yourator import CrawlerYourator
+from backend.crawlers.crawler_104_cffi import Crawler104Cffi
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def get_sync_status() -> dict:
 
 async def run_all_crawlers(keywords: list[str] | None = None) -> int:
     global _last_sync, _last_sync_count
-    crawlers = [RemotiveCrawler(), ArbeitnowCrawler(), CrawlerYourator()]
+    crawlers = [RemotiveCrawler(), ArbeitnowCrawler(), CrawlerYourator(), Crawler104Cffi()]
     all_jobs: list[JobCreate] = []
 
     for crawler in crawlers:
