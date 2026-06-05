@@ -24,5 +24,7 @@ def get_session():
         yield session
 
 
-# Initialize tables on module import so tests work without explicit init_db() call
-init_db()
+# Only auto-init for local SQLite dev (tests + local dev).
+# On cloud (PostgreSQL), init_db() is called by FastAPI lifespan in main.py.
+if DATABASE_URL.startswith("sqlite"):
+    init_db()
