@@ -13,6 +13,8 @@ class App extends StatelessWidget {
       child: MaterialApp.router(
         title: 'Career Pilot',
         theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.system,
         routerConfig: appRouter,
         debugShowCheckedModeBanner: false,
       ),
