@@ -174,6 +174,7 @@ backend/
 | `crawler_remotive.py` | Remotive.com | httpx，公開 API | ✅ 正常，~96 筆/次（英文遠端）|
 | `crawler_arbeitnow.py` | Arbeitnow.com | httpx，公開 API | ✅ 正常，~100 筆/頁（英文）|
 | `crawler_yourator.py` | Yourator.co | httpx，`api/v4/jobs` | ✅ 正常，~100 筆/次（台灣中文）|
+| `crawler_104_cffi.py` | 104.com.tw | **curl_cffi** Chrome TLS impersonation | ✅ 正常，~120K 筆可用（台灣）|
 | `crawler_cake.py` | CakeResume | httpx（舊）| ❌ API 已 404，停用 |
 | `crawler_104.py` | 104 | httpx（舊）| ❌ Cloudflare 403，停用 |
 
@@ -181,14 +182,32 @@ backend/
 
 | 平台 | 嘗試方法 | 結果 |
 |------|---------|------|
-| **Yourator** | httpx `api/v4/jobs?page=N` | ✅ 確認可用，20 筆/頁 |
-| **104** | httpx 直接呼叫 | ❌ Cloudflare 403 |
-| **104** | Playwright headless | ❌ bot 偵測，刻意回傳 0 筆 |
+| **Yourator** | httpx `api/v4/jobs?page=N` | ✅ 成功 |
+| **104** | httpx 直接呼叫 | ❌ Cloudflare 403（TLS fingerprint 不符）|
+| **104** | Playwright headless | ❌ bot 偵測，回傳 0 筆 |
 | **104** | Playwright stealth | ❌ 仍被偵測 |
+| **104** | **curl_cffi `impersonate="chrome124"`** | ✅ **成功！120K+ 筆職缺** |
 | **meet.jobs** | httpx | ❌ 回傳 HTML |
 
-> **104 技術債：** headless 永遠回傳 0 筆，非 CAPTCHA，是 TLS fingerprint 偵測。
-> 未來方案：residential proxy + 真實 Chrome session。
+> **突破關鍵：** `curl_cffi` 模擬 Chrome 的 TLS 1.3 fingerprint（JA3/JA4 hash），讓 Cloudflare 無法區分真實瀏覽器與爬蟲。
+
+### 104 API 格式
+
+```
+GET https://www.104.com.tw/jobs/search/api/jobs
+Params: jobcat (IT=2007001000), page, rows=30, order=11
+Headers: 需 Chrome User-Agent + Referer: https://www.104.com.tw/
+Impersonate: chrome124 (curl_cffi)
+
+Response: {
+  "data": [...],          // job list
+  "metadata": {
+    "pagination": {total, currentPage, lastPage}
+  }
+}
+Job fields: jobNo, jobName, custName, jobAddrNoDesc, description, link.job,
+            remoteWorkType (0=現場,1=遠端,2=混合), salaryLow, salaryHigh
+```
 
 ### Yourator API 格式
 
