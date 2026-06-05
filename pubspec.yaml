@@ -27,6 +27,7 @@ dependencies:
 
   # HTTP client for AI API calls
   http: ^1.2.2
+  shimmer: ^3.0.0
 
   dio: ^5.8.0
 
