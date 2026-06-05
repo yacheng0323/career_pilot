@@ -23,6 +23,10 @@ UserProfile _$UserProfileFromJson(Map<String, dynamic> json) {
 mixin _$UserProfile {
   List<String> get skills => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
+  String get bio => throw _privateConstructorUsedError;
+  String? get avatarPath => throw _privateConstructorUsedError;
+  String get expectedSalary => throw _privateConstructorUsedError;
+  String get expectedLocation => throw _privateConstructorUsedError;
 
   /// Serializes this UserProfile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,7 +45,14 @@ abstract class $UserProfileCopyWith<$Res> {
     $Res Function(UserProfile) then,
   ) = _$UserProfileCopyWithImpl<$Res, UserProfile>;
   @useResult
-  $Res call({List<String> skills, String name});
+  $Res call({
+    List<String> skills,
+    String name,
+    String bio,
+    String? avatarPath,
+    String expectedSalary,
+    String expectedLocation,
+  });
 }
 
 /// @nodoc
@@ -58,7 +69,14 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? skills = null, Object? name = null}) {
+  $Res call({
+    Object? skills = null,
+    Object? name = null,
+    Object? bio = null,
+    Object? avatarPath = freezed,
+    Object? expectedSalary = null,
+    Object? expectedLocation = null,
+  }) {
     return _then(
       _value.copyWith(
             skills: null == skills
@@ -68,6 +86,22 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
             name: null == name
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            bio: null == bio
+                ? _value.bio
+                : bio // ignore: cast_nullable_to_non_nullable
+                      as String,
+            avatarPath: freezed == avatarPath
+                ? _value.avatarPath
+                : avatarPath // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            expectedSalary: null == expectedSalary
+                ? _value.expectedSalary
+                : expectedSalary // ignore: cast_nullable_to_non_nullable
+                      as String,
+            expectedLocation: null == expectedLocation
+                ? _value.expectedLocation
+                : expectedLocation // ignore: cast_nullable_to_non_nullable
                       as String,
           )
           as $Val,
@@ -84,7 +118,14 @@ abstract class _$$UserProfileImplCopyWith<$Res>
   ) = __$$UserProfileImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<String> skills, String name});
+  $Res call({
+    List<String> skills,
+    String name,
+    String bio,
+    String? avatarPath,
+    String expectedSalary,
+    String expectedLocation,
+  });
 }
 
 /// @nodoc
@@ -100,7 +141,14 @@ class __$$UserProfileImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? skills = null, Object? name = null}) {
+  $Res call({
+    Object? skills = null,
+    Object? name = null,
+    Object? bio = null,
+    Object? avatarPath = freezed,
+    Object? expectedSalary = null,
+    Object? expectedLocation = null,
+  }) {
     return _then(
       _$UserProfileImpl(
         skills: null == skills
@@ -110,6 +158,22 @@ class __$$UserProfileImplCopyWithImpl<$Res>
         name: null == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        bio: null == bio
+            ? _value.bio
+            : bio // ignore: cast_nullable_to_non_nullable
+                  as String,
+        avatarPath: freezed == avatarPath
+            ? _value.avatarPath
+            : avatarPath // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        expectedSalary: null == expectedSalary
+            ? _value.expectedSalary
+            : expectedSalary // ignore: cast_nullable_to_non_nullable
+                  as String,
+        expectedLocation: null == expectedLocation
+            ? _value.expectedLocation
+            : expectedLocation // ignore: cast_nullable_to_non_nullable
                   as String,
       ),
     );
@@ -122,6 +186,10 @@ class _$UserProfileImpl implements _UserProfile {
   const _$UserProfileImpl({
     final List<String> skills = const [],
     this.name = '',
+    this.bio = '',
+    this.avatarPath,
+    this.expectedSalary = '',
+    this.expectedLocation = '',
   }) : _skills = skills;
 
   factory _$UserProfileImpl.fromJson(Map<String, dynamic> json) =>
@@ -139,10 +207,21 @@ class _$UserProfileImpl implements _UserProfile {
   @override
   @JsonKey()
   final String name;
+  @override
+  @JsonKey()
+  final String bio;
+  @override
+  final String? avatarPath;
+  @override
+  @JsonKey()
+  final String expectedSalary;
+  @override
+  @JsonKey()
+  final String expectedLocation;
 
   @override
   String toString() {
-    return 'UserProfile(skills: $skills, name: $name)';
+    return 'UserProfile(skills: $skills, name: $name, bio: $bio, avatarPath: $avatarPath, expectedSalary: $expectedSalary, expectedLocation: $expectedLocation)';
   }
 
   @override
@@ -151,7 +230,14 @@ class _$UserProfileImpl implements _UserProfile {
         (other.runtimeType == runtimeType &&
             other is _$UserProfileImpl &&
             const DeepCollectionEquality().equals(other._skills, _skills) &&
-            (identical(other.name, name) || other.name == name));
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.bio, bio) || other.bio == bio) &&
+            (identical(other.avatarPath, avatarPath) ||
+                other.avatarPath == avatarPath) &&
+            (identical(other.expectedSalary, expectedSalary) ||
+                other.expectedSalary == expectedSalary) &&
+            (identical(other.expectedLocation, expectedLocation) ||
+                other.expectedLocation == expectedLocation));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -160,6 +246,10 @@ class _$UserProfileImpl implements _UserProfile {
     runtimeType,
     const DeepCollectionEquality().hash(_skills),
     name,
+    bio,
+    avatarPath,
+    expectedSalary,
+    expectedLocation,
   );
 
   /// Create a copy of UserProfile
@@ -177,8 +267,14 @@ class _$UserProfileImpl implements _UserProfile {
 }
 
 abstract class _UserProfile implements UserProfile {
-  const factory _UserProfile({final List<String> skills, final String name}) =
-      _$UserProfileImpl;
+  const factory _UserProfile({
+    final List<String> skills,
+    final String name,
+    final String bio,
+    final String? avatarPath,
+    final String expectedSalary,
+    final String expectedLocation,
+  }) = _$UserProfileImpl;
 
   factory _UserProfile.fromJson(Map<String, dynamic> json) =
       _$UserProfileImpl.fromJson;
@@ -187,6 +283,14 @@ abstract class _UserProfile implements UserProfile {
   List<String> get skills;
   @override
   String get name;
+  @override
+  String get bio;
+  @override
+  String? get avatarPath;
+  @override
+  String get expectedSalary;
+  @override
+  String get expectedLocation;
 
   /// Create a copy of UserProfile
   /// with the given fields replaced by the non-null parameter values.
