@@ -2,13 +2,15 @@ import os
 from sqlmodel import SQLModel, Session, create_engine
 from backend.models.job import Job  # noqa: F401 — needed for SQLModel.metadata
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./career_pilot.db")
+_raw_url = os.getenv("DATABASE_URL", "sqlite:///./career_pilot.db")
 
-# check_same_thread=False required for SQLite + FastAPI
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
+# Railway / Heroku provide postgres:// but SQLAlchemy 1.4+ requires postgresql://
+DATABASE_URL = _raw_url.replace("postgres://", "postgresql://", 1)
+
+# connect_args only needed for SQLite
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 
 
 def init_db():
