@@ -473,6 +473,38 @@ pytest -v
 
 ---
 
+## 部署紀錄
+
+### Render 部署崩潰：Python 3.14 與 sqlmodel/pydantic 不相容（2026-06-08）
+
+**現象：** Render 部署時 `uvicorn backend.main:app` 啟動失敗：
+1. 第一輪：`PydanticUserError: Field 'id' requires a type annotation`
+   （但 `models/job.py` 的 `id: str` 明明已有型別標註）
+2. 修正 pydantic 版本後第二輪：在 import `backend.models.job` /
+   `class Job(SQLModel, table=True)` 時仍崩潰
+
+**根因（關鍵）：** Render 實際執行的 Python 版本是 **3.14.3**，但
+`render.yaml` 裡設定的 `PYTHON_VERSION: "3.11.0"` 並未生效（此服務可能不是透過
+Render Blueprint 建立，env var 沒被套用）。Python 3.14 太新，`sqlmodel==0.0.21`
+與當時可用的 pydantic 版本都還沒驗證相容，導致 metaclass 在解析 `SQLModel`
+table model 欄位時出錯（誤判 `id` 缺少型別標註 / import 期間崩潰）。
+
+另外也發現：Render 的 build command 實際使用 **`backend/requirements-prod.txt`**，
+不是 `backend/requirements.txt`（兩者需保持同步，否則本機/雲端環境會分歧）。
+
+**修正：**
+1. 新增專案根目錄 `runtime.txt`（內容 `python-3.11.9`），強制 Render 使用
+   跟本機開發一致的 Python 3.11，避開 3.14 的相容性地雷
+2. 在 `backend/requirements-prod.txt`（Render 實際使用的檔案）的
+   `sqlmodel==0.0.21` 下方新增 `pydantic==2.9.2` 作為保險鎖定
+
+Push 後 Render 會自動重新部署。
+
+> ⚠️ 之後修改後端依賴時，`requirements.txt` 與 `requirements-prod.txt`
+> 需同步更新；升級 `sqlmodel`/Python 版本前，先確認兩者與 pydantic 的相容矩陣。
+
+---
+
 ## 已知技術債
 
 | 項目 | 說明 | 優先 |
