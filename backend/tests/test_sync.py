@@ -65,3 +65,20 @@ def test_upsert_updates_all_mutable_fields(session, monkeypatch):
     assert job.salary_range == "100K"
     assert json.loads(job.skills) == ["Go"]
     assert job.url == "https://b.example.com"
+
+
+def test_upsert_preserves_enriched_fields_when_new_empty(session, monkeypatch):
+    """Partial enrichment: a later crawl without detail data (empty skills /
+    description) must not clobber previously enriched values."""
+    from backend import scheduler
+
+    monkeypatch.setattr(scheduler, "engine", session.get_bind())
+
+    scheduler._upsert_jobs([_job_create(skills=["Python"], description="rich")])
+    scheduler._upsert_jobs([_job_create(title="Renamed", skills=[], description="")])
+
+    job = session.get(Job, "j1")
+    session.refresh(job)
+    assert job.title == "Renamed"                    # normal field still updates
+    assert json.loads(job.skills) == ["Python"]      # preserved
+    assert job.description == "rich"                 # preserved

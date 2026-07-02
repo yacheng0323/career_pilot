@@ -98,6 +98,7 @@ class JobCard extends ConsumerWidget {
 /// 每個來源對應的顯示名稱與顏色
 const _sourceConfig = {
   '104':       (label: '104人力銀行', color: Color(0xFFFF6B00)),   // 104 橘
+  '1111':      (label: '1111人力銀行', color: Color(0xFFE4002B)),   // 1111 紅
   'yourator':  (label: 'Yourator',   color: Color(0xFF00A86B)),   // 青綠
   'remotive':  (label: 'Remotive',   color: Color(0xFF7C3AED)),   // 紫
   'arbeitnow': (label: 'Arbeitnow',  color: Color(0xFF2563EB)),   // 藍
