@@ -77,3 +77,36 @@ def test_get_jobs_pagination(client, session):
     data = resp.json()
     assert len(data["items"]) == 2
     assert data["total"] == 5
+
+
+def test_get_jobs_skills_filter_or_logic(client, session):
+    _make_job(session, id="j1", skills=["Python", "SQL"])
+    _make_job(session, id="j2", skills=["Flutter", "Dart"])
+    _make_job(session, id="j3", skills=["Go"])
+    resp = client.get("/api/v1/jobs?skills=python,dart")
+    ids = {item["id"] for item in resp.json()["items"]}
+    assert ids == {"j1", "j2"}
+
+
+def test_get_jobs_skills_filter_case_insensitive(client, session):
+    _make_job(session, id="j1", skills=["PYTHON"])
+    resp = client.get("/api/v1/jobs?skills=python")
+    assert len(resp.json()["items"]) == 1
+
+
+def test_get_jobs_skills_filter_no_partial_match(client, session):
+    _make_job(session, id="j1", skills=["JavaScript"])
+    _make_job(session, id="j2", skills=["Java"])
+    resp = client.get("/api/v1/jobs?skills=java")
+    ids = {item["id"] for item in resp.json()["items"]}
+    assert ids == {"j2"}
+
+
+def test_get_jobs_skills_filter_with_pagination_total(client, session):
+    for i in range(5):
+        _make_job(session, id=f"py{i}", skills=["Python"])
+    _make_job(session, id="other", skills=["Go"])
+    resp = client.get("/api/v1/jobs?skills=python&page=1&limit=2")
+    data = resp.json()
+    assert data["total"] == 5
+    assert len(data["items"]) == 2

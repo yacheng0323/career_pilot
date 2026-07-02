@@ -95,21 +95,40 @@ class JobCard extends ConsumerWidget {
   }
 }
 
+/// 每個來源對應的顯示名稱與顏色
+const _sourceConfig = {
+  '104':       (label: '104人力銀行', color: Color(0xFFFF6B00)),   // 104 橘
+  'yourator':  (label: 'Yourator',   color: Color(0xFF00A86B)),   // 青綠
+  'remotive':  (label: 'Remotive',   color: Color(0xFF7C3AED)),   // 紫
+  'arbeitnow': (label: 'Arbeitnow',  color: Color(0xFF2563EB)),   // 藍
+  'linkedin':  (label: 'LinkedIn',   color: Color(0xFF0A66C2)),   // LinkedIn 藍
+  'cake':      (label: 'CakeResume', color: Color(0xFFF59E0B)),   // 琥珀
+};
+
 class _SourceBadge extends StatelessWidget {
   const _SourceBadge({required this.source});
   final String source;
 
   @override
   Widget build(BuildContext context) {
+    final cfg = _sourceConfig[source.toLowerCase()];
+    final label = cfg?.label ?? source;
+    final color = cfg?.color ?? Theme.of(context).colorScheme.primary;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        source,
-        style: Theme.of(context).textTheme.labelSmall,
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
       ),
     );
   }

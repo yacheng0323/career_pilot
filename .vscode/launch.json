@@ -1,0 +1,87 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // ── Flutter ──────────────────────────────────────────────────────
+    {
+      "name": "Flutter (Android Emulator)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://10.0.2.2:8000",
+        "--dart-define=CLAUDE_API_KEY="
+      ]
+    },
+    {
+      "name": "Flutter (Android) + Real AI",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://10.0.2.2:8000",
+        "--dart-define=CLAUDE_API_KEY=${env:CLAUDE_API_KEY}"
+      ]
+    },
+    {
+      "name": "Flutter (Web)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://localhost:8000",
+        "--dart-define=CLAUDE_API_KEY="
+      ],
+      "deviceId": "chrome"
+    },
+
+    // ── Backend ──────────────────────────────────────────────────────
+    {
+      "name": "Backend (FastAPI)",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "backend.main:app",
+        "--reload",
+        "--port", "8000"
+      ],
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    // ── Backend Tests ─────────────────────────────────────────────────
+    {
+      "name": "Backend Tests (pytest)",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "backend/tests",
+        "-v"
+      ],
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "console": "integratedTerminal"
+    }
+  ],
+
+  // ── Compound: 後端 + Flutter 同時啟動 ─────────────────────────────
+  "compounds": [
+    {
+      "name": "Full Stack (Backend + Flutter Android)",
+      "configurations": [
+        "Backend (FastAPI)",
+        "Flutter (Android Emulator)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

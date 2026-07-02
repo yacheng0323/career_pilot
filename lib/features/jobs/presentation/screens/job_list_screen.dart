@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../sync/presentation/providers/sync_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/job_list_provider.dart';
 import '../widgets/job_card.dart';
+import '../widgets/job_card_skeleton.dart';
 
 class JobListScreen extends ConsumerStatefulWidget {
   const JobListScreen({super.key});
@@ -56,6 +58,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
         centerTitle: false,
         elevation: 0,
         actions: [
+          const _SyncButton(),
           IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: '我的技能檔案',
@@ -161,8 +164,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
           // Job list
           Expanded(
             child: jobsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const _SkeletonList(),
               error: (e, _) => Center(child: Text('載入失敗：$e')),
               data: (jobs) {
                 var filtered = jobs;
@@ -183,28 +185,23 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
                       .toList();
                 }
                 if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.search_off,
-                            size: 48, color: colors.onSurfaceVariant),
-                        const SizedBox(height: 12),
-                        const Text('找不到符合的職缺'),
-                        if (_hasActiveFilter) ...[
-                          const SizedBox(height: 8),
-                          TextButton(
-                              onPressed: _clearAllFilters,
-                              child: const Text('清除篩選')),
-                        ],
-                      ],
-                    ),
+                  return _EmptyState(
+                    hasFilter: _hasActiveFilter,
+                    onClearFilter: _clearAllFilters,
+                    onSync: () =>
+                        ref.read(syncNotifierProvider.notifier).sync(),
                   );
                 }
-                return ListView.builder(
-                  itemCount: filtered.length,
-                  padding: const EdgeInsets.only(bottom: 16),
-                  itemBuilder: (_, i) => JobCard(job: filtered[i]),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(jobListProvider);
+                    await ref.read(jobListProvider(query: _query).future);
+                  },
+                  child: ListView.builder(
+                    itemCount: filtered.length,
+                    padding: const EdgeInsets.only(bottom: 16),
+                    itemBuilder: (_, i) => JobCard(job: filtered[i]),
+                  ),
                 );
               },
             ),
@@ -289,6 +286,113 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SyncButton extends ConsumerWidget {
+  const _SyncButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(syncNotifierProvider);
+    final isSyncing = sync.status == SyncStatus.syncing;
+
+    return IconButton(
+      icon: isSyncing
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.sync),
+      tooltip: sync.lastSyncTime != null
+          ? '上次同步：${_formatTime(sync.lastSyncTime!)}'
+          : '同步職缺',
+      onPressed: isSyncing
+          ? null
+          : () => ref.read(syncNotifierProvider.notifier).sync(),
+    );
+  }
+
+  String _formatTime(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+}
+
+class _SkeletonList extends StatelessWidget {
+  const _SkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 6,
+      padding: const EdgeInsets.only(bottom: 16),
+      itemBuilder: (_, _) => const JobCardSkeleton(),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.hasFilter,
+    required this.onClearFilter,
+    required this.onSync,
+  });
+
+  final bool hasFilter;
+  final VoidCallback onClearFilter;
+  final VoidCallback onSync;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hasFilter ? Icons.filter_list_off : Icons.work_outline,
+              size: 72,
+              color: colors.onSurfaceVariant.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hasFilter ? '找不到符合的職缺' : '還沒有職缺資料',
+              style: textTheme.titleMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasFilter
+                  ? '試試調整篩選條件'
+                  : '點擊右上角 ↻ 按鈕同步最新職缺',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            if (hasFilter)
+              FilledButton.tonal(
+                onPressed: onClearFilter,
+                child: const Text('清除篩選'),
+              )
+            else
+              FilledButton.icon(
+                onPressed: onSync,
+                icon: const Icon(Icons.sync),
+                label: const Text('立即同步'),
+              ),
+          ],
         ),
       ),
     );

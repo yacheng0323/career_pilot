@@ -30,6 +30,8 @@ mixin _$Job {
   List<String> get skills => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   String get source => throw _privateConstructorUsedError;
+  String? get url => throw _privateConstructorUsedError;
+  DateTime? get crawledAt => throw _privateConstructorUsedError;
 
   /// Serializes this Job to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -55,6 +57,8 @@ abstract class $JobCopyWith<$Res> {
     List<String> skills,
     String description,
     String source,
+    String? url,
+    DateTime? crawledAt,
   });
 }
 
@@ -81,6 +85,8 @@ class _$JobCopyWithImpl<$Res, $Val extends Job> implements $JobCopyWith<$Res> {
     Object? skills = null,
     Object? description = null,
     Object? source = null,
+    Object? url = freezed,
+    Object? crawledAt = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -120,6 +126,14 @@ class _$JobCopyWithImpl<$Res, $Val extends Job> implements $JobCopyWith<$Res> {
                 ? _value.source
                 : source // ignore: cast_nullable_to_non_nullable
                       as String,
+            url: freezed == url
+                ? _value.url
+                : url // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            crawledAt: freezed == crawledAt
+                ? _value.crawledAt
+                : crawledAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
           )
           as $Val,
     );
@@ -142,6 +156,8 @@ abstract class _$$JobImplCopyWith<$Res> implements $JobCopyWith<$Res> {
     List<String> skills,
     String description,
     String source,
+    String? url,
+    DateTime? crawledAt,
   });
 }
 
@@ -165,6 +181,8 @@ class __$$JobImplCopyWithImpl<$Res> extends _$JobCopyWithImpl<$Res, _$JobImpl>
     Object? skills = null,
     Object? description = null,
     Object? source = null,
+    Object? url = freezed,
+    Object? crawledAt = freezed,
   }) {
     return _then(
       _$JobImpl(
@@ -204,6 +222,14 @@ class __$$JobImplCopyWithImpl<$Res> extends _$JobCopyWithImpl<$Res, _$JobImpl>
             ? _value.source
             : source // ignore: cast_nullable_to_non_nullable
                   as String,
+        url: freezed == url
+            ? _value.url
+            : url // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        crawledAt: freezed == crawledAt
+            ? _value.crawledAt
+            : crawledAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }
@@ -222,6 +248,8 @@ class _$JobImpl implements _Job {
     required final List<String> skills,
     required this.description,
     required this.source,
+    this.url,
+    this.crawledAt,
   }) : _skills = skills;
 
   factory _$JobImpl.fromJson(Map<String, dynamic> json) =>
@@ -251,10 +279,14 @@ class _$JobImpl implements _Job {
   final String description;
   @override
   final String source;
+  @override
+  final String? url;
+  @override
+  final DateTime? crawledAt;
 
   @override
   String toString() {
-    return 'Job(id: $id, title: $title, company: $company, location: $location, isRemote: $isRemote, salaryRange: $salaryRange, skills: $skills, description: $description, source: $source)';
+    return 'Job(id: $id, title: $title, company: $company, location: $location, isRemote: $isRemote, salaryRange: $salaryRange, skills: $skills, description: $description, source: $source, url: $url, crawledAt: $crawledAt)';
   }
 
   @override
@@ -274,7 +306,10 @@ class _$JobImpl implements _Job {
             const DeepCollectionEquality().equals(other._skills, _skills) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.source, source) || other.source == source));
+            (identical(other.source, source) || other.source == source) &&
+            (identical(other.url, url) || other.url == url) &&
+            (identical(other.crawledAt, crawledAt) ||
+                other.crawledAt == crawledAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -290,6 +325,8 @@ class _$JobImpl implements _Job {
     const DeepCollectionEquality().hash(_skills),
     description,
     source,
+    url,
+    crawledAt,
   );
 
   /// Create a copy of Job
@@ -317,6 +354,8 @@ abstract class _Job implements Job {
     required final List<String> skills,
     required final String description,
     required final String source,
+    final String? url,
+    final DateTime? crawledAt,
   }) = _$JobImpl;
 
   factory _Job.fromJson(Map<String, dynamic> json) = _$JobImpl.fromJson;
@@ -339,6 +378,10 @@ abstract class _Job implements Job {
   String get description;
   @override
   String get source;
+  @override
+  String? get url;
+  @override
+  DateTime? get crawledAt;
 
   /// Create a copy of Job
   /// with the given fields replaced by the non-null parameter values.
