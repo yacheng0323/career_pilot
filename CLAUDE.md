@@ -40,7 +40,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **M4b** | ✅ 完成 | Skeleton loader、深色模式、Empty state、Pull-to-refresh、真實 Claude AI | `dev` |
 | **M5a** | ✅ 完成 | 4-Tab BottomNavBar、分頁 Infinite Scroll、Kanban 追蹤、完整 Profile | `dev` |
 | **M5b** | ✅ 完成 | 首頁 Swipe 卡片流（右滑收藏/左滑跳過）、SwipeJobCard | `dev` |
-| **M4c** | 🔲 未來 | 備忘錄、面試日期提醒（整合進 M5+ Kanban）| TBD |
+| **M4c** | ✅ 完成 | 備忘錄、面試日期提醒（整合 Tracker Kanban）+ 後端 P1/P2 技術債清償 | `dev` |
 
 > Spec 文件：`docs/superpowers/specs/`
 > 實作計畫：`docs/superpowers/plans/`
@@ -58,6 +58,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `_EmptyState` — 無資料時顯示說明 + 立即同步按鈕
 - `RefreshIndicator` — 下拉重新整理
 - `AiService.useMock = apiKey.isEmpty` — 有 key 自動用真實 Claude API
+
+**M4c — 備忘錄 + 面試提醒（✅ 2026-07-02）**
+- `JobMemo`（note + interviewAt）存 SharedPreferences `job_memo_<jobId>`，`JobMemoNotifier`（family per jobId）
+- JobDetailScreen `MemoCard`：備忘錄 TextField + 面試日期/時間 picker（可清除）
+- TrackerScreen：卡片面試日期 chip（急迫度配色：<3天紅、<7天橘、更遠藍、過期灰）+ 頂部「即將面試」banner（7 天內）
+- 後端技術債清償：P1 skills filter DB-side、P2 `_upsert_jobs` 全欄位更新
+- 不做 OS 推播（flutter_local_notifications 超出範圍）；提醒為 in-app banner + chip
 
 ---
 
@@ -108,7 +115,7 @@ git merge --no-ff feature/<name>        # feature 完成後 merge
 # Flutter
 flutter pub get
 dart analyze lib/                                           # zero-issue gate
-flutter test                                               # 45 tests
+flutter test                                               # 63 tests
 dart run build_runner build --delete-conflicting-outputs   # 修改 @freezed / @riverpod 後執行
 
 # 啟動（Android emulator 預設）
@@ -133,7 +140,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000 `
 | **Backend (FastAPI)** | 啟動後端，自動使用 `backend/.venv`，無需手動 activate |
 | **Flutter (Android Emulator)** | 啟動 Flutter，API 指向 `10.0.2.2:8000` |
 | **Flutter (Web)** | 啟動 Flutter Web，API 指向 `localhost:8000` |
-| **Backend Tests (pytest)** | 執行後端 29 tests |
+| **Backend Tests (pytest)** | 執行後端 34 tests |
 | **Full Stack (Backend + Flutter Android)** | Compound：同時啟動後端 + Flutter |
 
 > VSCode 會自動識別 `backend/.venv/Scripts/python.exe`（`.vscode/settings.json` 已設定），
@@ -169,7 +176,7 @@ cd C:\dev\career_pilot\backend
 .\.venv\Scripts\Activate.ps1           # Python 3.12
 
 uvicorn backend.main:app --reload --port 8000   # 從專案根目錄！不是 backend/ 子目錄
-pytest -v                                        # 29 tests
+pytest -v                                        # 34 tests
 pip install -r requirements-dev.txt
 ```
 
@@ -199,7 +206,7 @@ backend/
 ├── scripts/                   # 探測/研究腳本（不進生產）
 ├── requirements.txt           # runtime deps（含 curl-cffi==0.15.0）
 ├── requirements-dev.txt       # runtime + pytest/respx/pytest-asyncio
-└── tests/                     # pytest，29 tests
+└── tests/                     # pytest，34 tests
 ```
 
 ### API Endpoints
@@ -254,8 +261,8 @@ Job fields: jobNo, jobName, custName, jobAddrNoDesc, description,
 ### 爬蟲設計決策
 
 - **全量抓取**：爬蟲不做 keyword 過濾，全部存入 DB，篩選在 API query 層做
-- **Skills filter**：Python-side post-DB filter（OR 邏輯），大資料量時應改為 DB-side（技術債）
-- **_upsert_jobs**：僅更新 title/description/salary_range/skills/crawled_at，不更新 location/company（技術債）
+- **Skills filter**：DB-side `ilike('%"<skill>"%')` OR 串接（引號錨定避免 java 誤中 javascript），分頁 total 用 `func.count()`（M4c 清償 P1）
+- **_upsert_jobs**：更新全部可變欄位（title/company/location/is_remote/description/salary_range/skills/url/crawled_at）（M4c 清償 P2）
 - **排程**：APScheduler 每 6 小時執行，4 個爬蟲依序執行
 - **爬蟲順序**：Remotive → Arbeitnow → Yourator → Crawler104Cffi
 
@@ -265,20 +272,20 @@ Job fields: jobNo, jobName, custName, jobAddrNoDesc, description,
 |------|-------|------|
 | `test_models.py` | 3 | Job/JobCreate/JobResponse 欄位 |
 | `test_database.py` | 2 | SQLite init + session fixture |
-| `test_api_jobs.py` | 8 | API 端點（篩選、分頁、404）|
+| `test_api_jobs.py` | 12 | API 端點（篩選、分頁、404、skills DB-side）|
 | `test_crawler_cake.py` | 2 | CakeResume mock（respx）|
 | `test_crawler_104.py` | 2 | 104 httpx mock（respx）|
-| `test_sync.py` | 3 | sync endpoint + error handling |
+| `test_sync.py` | 4 | sync endpoint + error handling + upsert 全欄位 |
 | `test_crawler_yourator.py` | 3 | Yourator mock（respx）|
 | `test_crawler_104_cffi.py` | 6 | 104 curl_cffi mock（unittest.mock）|
-| **Total** | **29** | |
+| **Total** | **34** | |
 
 所有測試用 in-memory SQLite，不需要網路。
 
 ```powershell
 cd C:\dev\career_pilot\backend
 .\.venv\Scripts\Activate.ps1
-pytest -v    # 29 tests
+pytest -v    # 34 tests
 ```
 
 ---
@@ -445,7 +452,7 @@ Full-screen（覆蓋 NavBar）
 
 ## Testing
 
-### Flutter（`test/`）— 45 tests
+### Flutter（`test/`）— 63 tests
 
 | File | Tests | What it covers |
 |------|-------|----------------|
@@ -455,7 +462,9 @@ Full-screen（覆蓋 NavBar）
 | `api_client_test.dart` | 4 | ApiClient baseUrl + ApiException (Plan B) |
 | `job_repository_test.dart` | 3 | RemoteDataSource + fallback (Plan B) |
 | `m4b_test.dart` | 8 | AppTheme.dark + AiService key 判斷 (M4b) |
-| **Total** | **45** | |
+| `m6_polish_test.dart` | 4 | Swipe dedup、AI cache、URL launch (M6) |
+| `m4c_test.dart` | 14 | JobMemoNotifier、interviewUrgency、MemoCard widget (M4c) |
+| **Total** | **63** | |
 
 ```powershell
 $env:PATH = "D:\flutter\bin;$env:PATH"
@@ -463,7 +472,7 @@ cd C:\dev\career_pilot
 flutter test
 ```
 
-### Backend（`backend/tests/`）— 29 tests
+### Backend（`backend/tests/`）— 34 tests
 
 ```powershell
 cd C:\dev\career_pilot\backend
@@ -509,8 +518,6 @@ Push 後 Render 會自動重新部署。
 
 | 項目 | 說明 | 優先 |
 |------|------|------|
-| Skills filter DB-side | 目前 Python post-filter，大資料量慢 | P1 |
-| `_upsert_jobs` 欄位不完整 | location/company 更新時不覆蓋舊值 | P2 |
 | 104 skills 欄位空 | `tags` 是工作特性碼（wf*），非技能；需抓 detail API | P2 |
 | AI 結果未 cache | 每次開詳情頁都重新呼叫 AI（或計算）| P2 |
 | Yourator description 只用 name | 完整描述需另呼叫 detail API | P3 |
