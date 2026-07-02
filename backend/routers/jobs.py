@@ -1,6 +1,5 @@
-import json
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session, select
+from sqlmodel import Session, func, or_, select
 from backend.database import get_session
 from backend.models.job import Job, JobResponse
 
@@ -32,22 +31,21 @@ def list_jobs(
     if source:
         stmt = stmt.where(Job.source == source)
 
-    all_jobs = session.exec(stmt).all()
-
-    # Skills filter (OR logic) — done in Python after DB fetch
+    # Skills filter (OR logic) — DB-side. skills is stored as a JSON array
+    # string, so anchoring on the surrounding quotes gives whole-token match
+    # ("java" must not hit "javascript"); ilike keeps it case-insensitive.
     if skills:
-        skill_list = [s.strip().lower() for s in skills.split(",")]
-        all_jobs = [
-            j for j in all_jobs
-            if any(
-                s in [sk.lower() for sk in json.loads(j.skills)]
-                for s in skill_list
-            )
-        ]
+        skill_list = [s.strip() for s in skills.split(",") if s.strip()]
+        stmt = stmt.where(
+            or_(*[Job.skills.ilike(f'%"{s}"%') for s in skill_list])
+        )
 
-    total = len(all_jobs)
-    offset = (page - 1) * limit
-    paginated = all_jobs[offset: offset + limit]
+    total = session.exec(
+        select(func.count()).select_from(stmt.subquery())
+    ).one()
+    paginated = session.exec(
+        stmt.offset((page - 1) * limit).limit(limit)
+    ).all()
 
     return {
         "items": [JobResponse.from_job(j).model_dump() for j in paginated],
