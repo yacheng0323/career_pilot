@@ -13,7 +13,8 @@ def _get_crawlers():
     crawlers = [RemotiveCrawler(), ArbeitnowCrawler(), CrawlerYourator()]
     try:
         from backend.crawlers.crawler_104_cffi import Crawler104Cffi
-        crawlers.append(Crawler104Cffi())
+        from backend.crawlers.crawler_1111 import Crawler1111
+        crawlers.extend([Crawler104Cffi(), Crawler1111()])
     except Exception:
         pass  # curl_cffi not available on this platform
     return crawlers
@@ -65,10 +66,14 @@ def _upsert_jobs(jobs: list[JobCreate]) -> int:
                 existing.company = j.company
                 existing.location = j.location
                 existing.is_remote = j.is_remote
-                existing.description = j.description
                 existing.salary_range = j.salary_range
-                existing.skills = json.dumps(j.skills)
                 existing.url = j.url
+                # Enrichment is partial (top-N per crawl) — an empty value
+                # must not clobber previously enriched data.
+                if j.description:
+                    existing.description = j.description
+                if j.skills:
+                    existing.skills = json.dumps(j.skills)
                 existing.crawled_at = datetime.utcnow()
             else:
                 session.add(Job(

@@ -140,3 +140,65 @@ async def test_104_strips_highlight_markers():
     for j in jobs:
         assert "[[[" not in j.description
         assert "]]]" not in j.title
+
+
+# ---------------------------------------------------------------------------
+# Detail API skill enrichment (2026-07-02 tech debt)
+# ---------------------------------------------------------------------------
+_MOCK_DETAIL = {
+    "data": {
+        "condition": {
+            "specialty": [
+                {"code": "12001001046", "description": "Windows 10"},
+                {"code": "12001008003", "description": "Excel"},
+            ],
+            "skill": [{"code": "x", "description": "不該被用到"}],
+        }
+    }
+}
+
+
+def _routed_get(url, **kwargs):
+    """Route mock: detail endpoint vs search endpoint."""
+    if "job/ajax/content/" in url:
+        return _make_mock_response(_MOCK_DETAIL)
+    return _make_mock_response(_MOCK_RESPONSE_JOBS)
+
+
+@pytest.mark.asyncio
+async def test_104_detail_enriches_skills():
+    with patch("backend.crawlers.crawler_104_cffi.cffi_requests") as mock_cffi:
+        mock_cffi.get.side_effect = _routed_get
+        crawler = Crawler104Cffi()
+        jobs = await crawler.fetch(pages=1)
+
+    assert jobs[0].skills == ["Windows 10", "Excel"]
+    assert "不該被用到" not in jobs[0].skills
+
+
+@pytest.mark.asyncio
+async def test_104_detail_respects_max_details_cap():
+    with patch("backend.crawlers.crawler_104_cffi.cffi_requests") as mock_cffi:
+        mock_cffi.get.side_effect = _routed_get
+        crawler = Crawler104Cffi()
+        jobs = await crawler.fetch(pages=1, max_details=1)
+
+    assert jobs[0].skills == ["Windows 10", "Excel"]
+    assert jobs[1].skills == []
+
+
+@pytest.mark.asyncio
+async def test_104_detail_failure_keeps_empty_skills():
+    def _detail_fails(url, **kwargs):
+        if "job/ajax/content/" in url:
+            resp = MagicMock()
+            resp.status_code = 404
+            return resp
+        return _make_mock_response(_MOCK_RESPONSE_JOBS)
+
+    with patch("backend.crawlers.crawler_104_cffi.cffi_requests") as mock_cffi:
+        mock_cffi.get.side_effect = _detail_fails
+        crawler = Crawler104Cffi()
+        jobs = await crawler.fetch(pages=1)
+
+    assert all(j.skills == [] for j in jobs)

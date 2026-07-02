@@ -87,3 +87,64 @@ async def test_yourator_handles_http_error():
     crawler = CrawlerYourator()
     jobs = await crawler.fetch(pages=1)
     assert jobs == []
+
+
+# ---------------------------------------------------------------------------
+# JSON-LD description enrichment (2026-07-02 tech debt)
+# ---------------------------------------------------------------------------
+MOCK_JOB_PAGE_HTML = """<html><head>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"JobPosting",
+ "title":"Flutter 工程師",
+ "description":"<p>負責 Flutter App 開發</p><ul><li>三年以上經驗</li></ul>"}
+</script>
+</head><body>page</body></html>"""
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_yourator_enriches_description_from_jsonld():
+    respx.get("https://www.yourator.co/api/v4/jobs").mock(
+        side_effect=[
+            httpx.Response(200, json=MOCK_YOURATOR_PAGE1),
+            httpx.Response(200, json=MOCK_YOURATOR_EMPTY),
+        ]
+    )
+    respx.get("https://www.yourator.co/companies/acme/jobs/12345").mock(
+        return_value=httpx.Response(200, text=MOCK_JOB_PAGE_HTML)
+    )
+    crawler = CrawlerYourator()
+    jobs = await crawler.fetch(pages=1)
+
+    assert "負責 Flutter App 開發" in jobs[0].description
+    assert "三年以上經驗" in jobs[0].description
+    assert "<p>" not in jobs[0].description  # HTML stripped
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_yourator_unenriched_description_is_empty():
+    """Beyond max_details cap the description must be empty (not the job
+    name) so _upsert_jobs preserves any previously enriched value."""
+    respx.get("https://www.yourator.co/api/v4/jobs").mock(
+        return_value=httpx.Response(200, json=MOCK_YOURATOR_PAGE1)
+    )
+    crawler = CrawlerYourator()
+    jobs = await crawler.fetch(pages=1, max_details=0)
+
+    assert jobs[0].description == ""
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_yourator_detail_failure_keeps_empty_description():
+    respx.get("https://www.yourator.co/api/v4/jobs").mock(
+        return_value=httpx.Response(200, json=MOCK_YOURATOR_PAGE1)
+    )
+    respx.get("https://www.yourator.co/companies/acme/jobs/12345").mock(
+        return_value=httpx.Response(500)
+    )
+    crawler = CrawlerYourator()
+    jobs = await crawler.fetch(pages=1)
+
+    assert jobs[0].description == ""

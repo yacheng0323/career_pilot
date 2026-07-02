@@ -30,6 +30,7 @@ Job fields used:
 """
 import asyncio
 import random
+import re
 from backend.crawlers.base import BaseCrawler
 from backend.models.job import JobCreate
 
@@ -40,6 +41,9 @@ except ImportError:
     _CFFI_AVAILABLE = False
 
 _SEARCH_URL = "https://www.104.com.tw/jobs/search/api/jobs"
+# Detail API takes the alphanumeric slug from link.job — NOT jobNo (404).
+# data.condition.specialty[].description holds the real tech skills.
+_DETAIL_URL = "https://www.104.com.tw/job/ajax/content/"
 
 # IT & Software job categories
 _JOBCATS = [
@@ -64,10 +68,14 @@ _HEADERS = {
 class Crawler104Cffi(BaseCrawler):
     source = "104"
 
-    async def fetch(self, keyword: str = "", pages: int = 3) -> list[JobCreate]:
+    async def fetch(
+        self, keyword: str = "", pages: int = 3, max_details: int = 30,
+    ) -> list[JobCreate]:
         """
         Fetch IT jobs from 104.com.tw across multiple job categories.
         Uses curl_cffi to bypass Cloudflare TLS fingerprint detection.
+        Enriches skills via the detail API for the first max_details jobs
+        (list is newest-first, so new jobs get enriched first).
         """
         if not _CFFI_AVAILABLE:
             return []
@@ -125,7 +133,48 @@ class Crawler104Cffi(BaseCrawler):
             # Delay between categories
             await asyncio.sleep(random.uniform(2.0, 4.0))
 
+        await self._enrich_skills(results[:max_details])
         return results
+
+    async def _enrich_skills(self, jobs: list[JobCreate]) -> None:
+        """Fill job.skills from the detail API (condition.specialty)."""
+        loop = asyncio.get_event_loop()
+        for job in jobs:
+            m = re.search(r"/job/([0-9a-z]+)", job.url or "", re.I)
+            if not m:
+                continue
+            slug = m.group(1)
+            try:
+                response = await loop.run_in_executor(
+                    None,
+                    lambda s=slug: cffi_requests.get(
+                        _DETAIL_URL + s,
+                        headers={
+                            **_HEADERS,
+                            "Referer": f"https://www.104.com.tw/job/{s}",
+                        },
+                        impersonate="chrome124",
+                        timeout=20,
+                    ),
+                )
+                if response.status_code != 200:
+                    continue
+                specialty = (
+                    response.json()
+                    .get("data", {})
+                    .get("condition", {})
+                    .get("specialty", [])
+                )
+                skills = [
+                    s.get("description", "")
+                    for s in specialty
+                    if s.get("description")
+                ]
+                if skills:
+                    job.skills = skills[:12]
+                await asyncio.sleep(random.uniform(0.3, 0.8))
+            except Exception:
+                continue  # keep list data; skills stay []
 
     def _parse(self, item: dict) -> JobCreate:
         job_no = str(item.get("jobNo", ""))
