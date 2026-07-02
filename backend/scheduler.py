@@ -62,9 +62,13 @@ def _upsert_jobs(jobs: list[JobCreate]) -> int:
             existing = session.get(Job, j.id)
             if existing:
                 existing.title = j.title
+                existing.company = j.company
+                existing.location = j.location
+                existing.is_remote = j.is_remote
                 existing.description = j.description
                 existing.salary_range = j.salary_range
                 existing.skills = json.dumps(j.skills)
+                existing.url = j.url
                 existing.crawled_at = datetime.utcnow()
             else:
                 session.add(Job(

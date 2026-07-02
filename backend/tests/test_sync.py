@@ -1,4 +1,7 @@
+import json
 from unittest.mock import AsyncMock, patch
+
+from backend.models.job import Job, JobCreate
 
 
 def test_sync_status_initial(client):
@@ -29,3 +32,36 @@ def test_trigger_sync_handles_crawler_error(client):
         resp = client.post("/api/v1/sync")
     assert resp.status_code == 500
     assert "error" in resp.json()["detail"].lower()
+
+
+def _job_create(**overrides) -> JobCreate:
+    base = dict(
+        id="j1", title="Dev", company="Acme", location="台北市",
+        is_remote=False, salary_range="80K", skills=["Python"],
+        description="desc", source="104", url="https://a.example.com",
+    )
+    base.update(overrides)
+    return JobCreate(**base)
+
+
+def test_upsert_updates_all_mutable_fields(session, monkeypatch):
+    from backend import scheduler
+
+    monkeypatch.setattr(scheduler, "engine", session.get_bind())
+
+    scheduler._upsert_jobs([_job_create()])
+    scheduler._upsert_jobs([_job_create(
+        title="Senior Dev", company="Beta", location="台中市",
+        is_remote=True, salary_range="100K", skills=["Go"],
+        url="https://b.example.com",
+    )])
+
+    job = session.get(Job, "j1")
+    session.refresh(job)
+    assert job.title == "Senior Dev"
+    assert job.company == "Beta"
+    assert job.location == "台中市"
+    assert job.is_remote is True
+    assert job.salary_range == "100K"
+    assert json.loads(job.skills) == ["Go"]
+    assert job.url == "https://b.example.com"

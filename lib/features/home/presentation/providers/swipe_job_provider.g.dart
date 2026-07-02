@@ -6,7 +6,7 @@ part of 'swipe_job_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$swipeJobDeckHash() => r'28af74e29a960c3a8d17acbc08acea08e88f2e05';
+String _$swipeJobDeckHash() => r'a2b807b908882e10e7c0ca29405169ab14e75d7d';
 
 /// See also [SwipeJobDeck].
 @ProviderFor(SwipeJobDeck)

@@ -10,6 +10,7 @@ import '../providers/favorite_provider.dart';
 import '../providers/job_list_provider.dart';
 import '../widgets/skill_chip.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
+import '../../../tracker/presentation/widgets/memo_card.dart';
 
 // ---------------------------------------------------------------------------
 // AI analysis provider (family per jobId)
@@ -154,6 +155,10 @@ class JobDetailScreen extends ConsumerWidget {
 
                 // Apply status
                 _ApplyStatusRow(jobId: job.id),
+                const SizedBox(height: 16),
+
+                // ── 備忘錄 + 面試時間（M4c）─────────────────
+                MemoCard(jobId: job.id),
                 const SizedBox(height: 24),
                 const Divider(),
                 const SizedBox(height: 16),
