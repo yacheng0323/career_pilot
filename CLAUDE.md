@@ -41,6 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **M5a** | ✅ 完成 | 4-Tab BottomNavBar、分頁 Infinite Scroll、Kanban 追蹤、完整 Profile | `dev` |
 | **M5b** | ✅ 完成 | 首頁 Swipe 卡片流（右滑收藏/左滑跳過）、SwipeJobCard | `dev` |
 | **M4c** | ✅ 完成 | 備忘錄、面試日期提醒（整合 Tracker Kanban）+ 後端 P1/P2 技術債清償 | `dev` |
+| **Debt** | ✅ 完成 | 104 detail skills、Yourator 完整描述（JSON-LD）、**1111 爬蟲**、LinkedIn 評估關閉 | `dev` |
 
 > Spec 文件：`docs/superpowers/specs/`
 > 實作計畫：`docs/superpowers/plans/`
@@ -115,7 +116,7 @@ git merge --no-ff feature/<name>        # feature 完成後 merge
 # Flutter
 flutter pub get
 dart analyze lib/                                           # zero-issue gate
-flutter test                                               # 63 tests
+flutter test                                               # 64 tests
 dart run build_runner build --delete-conflicting-outputs   # 修改 @freezed / @riverpod 後執行
 
 # 啟動（Android emulator 預設）
@@ -140,7 +141,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000 `
 | **Backend (FastAPI)** | 啟動後端，自動使用 `backend/.venv`，無需手動 activate |
 | **Flutter (Android Emulator)** | 啟動 Flutter，API 指向 `10.0.2.2:8000` |
 | **Flutter (Web)** | 啟動 Flutter Web，API 指向 `localhost:8000` |
-| **Backend Tests (pytest)** | 執行後端 34 tests |
+| **Backend Tests (pytest)** | 執行後端 46 tests |
 | **Full Stack (Backend + Flutter Android)** | Compound：同時啟動後端 + Flutter |
 
 > VSCode 會自動識別 `backend/.venv/Scripts/python.exe`（`.vscode/settings.json` 已設定），
@@ -176,7 +177,7 @@ cd C:\dev\career_pilot\backend
 .\.venv\Scripts\Activate.ps1           # Python 3.12
 
 uvicorn backend.main:app --reload --port 8000   # 從專案根目錄！不是 backend/ 子目錄
-pytest -v                                        # 34 tests
+pytest -v                                        # 46 tests
 pip install -r requirements-dev.txt
 ```
 
@@ -188,7 +189,7 @@ pip install -r requirements-dev.txt
 
 ```
 backend/
-├── main.py                    # FastAPI app + APScheduler lifespan（啟動 4 個爬蟲）
+├── main.py                    # FastAPI app + APScheduler lifespan（啟動 5 個爬蟲）
 ├── database.py                # SQLite engine（DATABASE_URL env var）+ get_session()
 ├── scheduler.py               # run_all_crawlers(), _upsert_jobs(), create_scheduler()
 ├── models/job.py              # Job (SQLModel), JobCreate, JobResponse (camelCase)
@@ -199,14 +200,15 @@ backend/
 │   ├── base.py                # BaseCrawler ABC（make_id, _sleep 1-3s random）
 │   ├── crawler_remotive.py    # Remotive.com（httpx）✅ ~96 筆（英文遠端）
 │   ├── crawler_arbeitnow.py   # Arbeitnow.com（httpx）✅ ~100 筆/頁（英文）
-│   ├── crawler_yourator.py    # Yourator.co（httpx）✅ ~100 筆（台灣中文）
-│   ├── crawler_104_cffi.py    # 104.com.tw（curl_cffi）✅ 120K+ 筆（台灣）
+│   ├── crawler_yourator.py    # Yourator.co（httpx）✅ ~100 筆（台灣中文）+ JSON-LD 描述補全
+│   ├── crawler_104_cffi.py    # 104.com.tw（curl_cffi）✅ 120K+ 筆（台灣）+ detail skills 補全
+│   ├── crawler_1111.py        # 1111.com.tw（curl_cffi）✅ JSON API（台灣）
 │   ├── crawler_cake.py        # ❌ CakeResume（API 404，停用）
 │   └── crawler_104.py         # ❌ 104 httpx（Cloudflare 403，停用）
 ├── scripts/                   # 探測/研究腳本（不進生產）
 ├── requirements.txt           # runtime deps（含 curl-cffi==0.15.0）
 ├── requirements-dev.txt       # runtime + pytest/respx/pytest-asyncio
-└── tests/                     # pytest，34 tests
+└── tests/                     # pytest，46 tests
 ```
 
 ### API Endpoints
@@ -229,6 +231,23 @@ Headers: User-Agent Chrome + Referer: https://www.yourator.co/jobs
 Response: {"payload": {"hasMore": true, "nextPage": 2, "jobs": [...]}}
 Job fields: id, name, path, salary, location, tags[], company.brand
 URL 組合: https://www.yourator.co + job.path
+
+完整描述（2026-07-02）: 無公開 detail API（api/v4/jobs/{id} 404）；
+職缺頁 HTML 內嵌 JSON-LD JobPosting，description 去 tag 後使用（cap 1000）
+```
+
+#### 1111（curl_cffi，2026-07-02 新增）
+
+```
+GET https://www.1111.com.tw/api/v1/search/jobs?keyword=X&page=N
+impersonate="chrome124"（統一用 curl_cffi，未驗證 httpx）
+Response: {"result": {"pagination": {page, limit:30, totalCount, totalPage},
+                      "hits": [...]}}
+Hit fields: jobId, title, companyName, description, salary（顯示字串）,
+            workCity.name；title/description 內 <em> highlight 需去除
+Job URL: https://www.1111.com.tw/job/{jobId}
+限制: API 無 skills、無 remote 欄位（is_remote=False, skills=[]）
+Keyword 輪詢: 軟體工程師 / python / 前端工程師（跨 keyword dedup by jobId）
 ```
 
 #### 104（curl_cffi — 突破 Cloudflare）
@@ -247,6 +266,11 @@ Job fields: jobNo, jobName, custName, jobAddrNoDesc, description,
             link.job (URL), remoteWorkType (0=現場/1=遠端/2=混合),
             salaryLow, salaryHigh
 薪資解析: salaryHigh >= 9999999 → "面議"，否則 "{low//1000}K–{high//1000}K"
+
+Detail API（skills 補全，2026-07-02）:
+GET https://www.104.com.tw/job/ajax/content/{slug}
+slug = link.job URL 的英數碼（用 jobNo 會 404 error 11201）
+skills = data.condition.specialty[].description（前 12 筆）
 ```
 
 **為何 curl_cffi 有效：**
@@ -263,8 +287,10 @@ Job fields: jobNo, jobName, custName, jobAddrNoDesc, description,
 - **全量抓取**：爬蟲不做 keyword 過濾，全部存入 DB，篩選在 API query 層做
 - **Skills filter**：DB-side `ilike('%"<skill>"%')` OR 串接（引號錨定避免 java 誤中 javascript），分頁 total 用 `func.count()`（M4c 清償 P1）
 - **_upsert_jobs**：更新全部可變欄位（title/company/location/is_remote/description/salary_range/skills/url/crawled_at）（M4c 清償 P2）
-- **排程**：APScheduler 每 6 小時執行，4 個爬蟲依序執行
-- **爬蟲順序**：Remotive → Arbeitnow → Yourator → Crawler104Cffi
+- **Enrichment 成本控制**：104 skills / Yourator description 只補前 N 筆（104 `max_details=30`、Yourator `max_details=40`，list 最新排序 → 新職缺優先），每筆間 0.3–0.8s 延遲，失敗靜默跳過
+- **Upsert 保護規則**：新資料 `skills` 或 `description` 為空時保留舊值（避免未 enrich 批次清掉已補資料）；Yourator 未 enrich 職缺 description 為 `""`（不再塞 name 佔位）
+- **排程**：APScheduler 每 6 小時執行，5 個爬蟲依序執行
+- **爬蟲順序**：Remotive → Arbeitnow → Yourator → Crawler104Cffi → Crawler1111
 
 ### Backend 測試
 
@@ -275,17 +301,18 @@ Job fields: jobNo, jobName, custName, jobAddrNoDesc, description,
 | `test_api_jobs.py` | 12 | API 端點（篩選、分頁、404、skills DB-side）|
 | `test_crawler_cake.py` | 2 | CakeResume mock（respx）|
 | `test_crawler_104.py` | 2 | 104 httpx mock（respx）|
-| `test_sync.py` | 4 | sync endpoint + error handling + upsert 全欄位 |
-| `test_crawler_yourator.py` | 3 | Yourator mock（respx）|
-| `test_crawler_104_cffi.py` | 6 | 104 curl_cffi mock（unittest.mock）|
-| **Total** | **34** | |
+| `test_sync.py` | 5 | sync endpoint + upsert 全欄位 + enrich 保護規則 |
+| `test_crawler_yourator.py` | 6 | Yourator mock + JSON-LD 描述補全（respx）|
+| `test_crawler_104_cffi.py` | 9 | 104 curl_cffi mock + detail skills 補全 |
+| `test_crawler_1111.py` | 5 | 1111 curl_cffi mock（欄位映射、dedup、error）|
+| **Total** | **46** | |
 
 所有測試用 in-memory SQLite，不需要網路。
 
 ```powershell
 cd C:\dev\career_pilot\backend
 .\.venv\Scripts\Activate.ps1
-pytest -v    # 34 tests
+pytest -v    # 46 tests
 ```
 
 ---
@@ -408,6 +435,7 @@ Full-screen（覆蓋 NavBar）
 | source 值 | 顯示名稱 | 顏色 |
 |-----------|---------|------|
 | `104` | 104人力銀行 | 橘 `#FF6B00` |
+| `1111` | 1111人力銀行 | 紅 `#E4002B` |
 | `yourator` | Yourator | 青綠 `#00A86B` |
 | `remotive` | Remotive | 紫 `#7C3AED` |
 | `arbeitnow` | Arbeitnow | 藍 `#2563EB` |
@@ -452,11 +480,11 @@ Full-screen（覆蓋 NavBar）
 
 ## Testing
 
-### Flutter（`test/`）— 63 tests
+### Flutter（`test/`）— 64 tests
 
 | File | Tests | What it covers |
 |------|-------|----------------|
-| `widget_test.dart` | 6 | SkillChip + JobCard widget rendering (M1) |
+| `widget_test.dart` | 7 | SkillChip + JobCard widget rendering (M1) + 1111 badge |
 | `m2_widget_test.dart` | 8 | FavoriteNotifier + ApplyStatusNotifier (M2) |
 | `m3_test.dart` | 16 | Filter logic, AiService mock, UserProfileNotifier (M3) |
 | `api_client_test.dart` | 4 | ApiClient baseUrl + ApiException (Plan B) |
@@ -464,7 +492,7 @@ Full-screen（覆蓋 NavBar）
 | `m4b_test.dart` | 8 | AppTheme.dark + AiService key 判斷 (M4b) |
 | `m6_polish_test.dart` | 4 | Swipe dedup、AI cache、URL launch (M6) |
 | `m4c_test.dart` | 14 | JobMemoNotifier、interviewUrgency、MemoCard widget (M4c) |
-| **Total** | **63** | |
+| **Total** | **64** | |
 
 ```powershell
 $env:PATH = "D:\flutter\bin;$env:PATH"
@@ -472,7 +500,7 @@ cd C:\dev\career_pilot
 flutter test
 ```
 
-### Backend（`backend/tests/`）— 34 tests
+### Backend（`backend/tests/`）— 46 tests
 
 ```powershell
 cd C:\dev\career_pilot\backend
@@ -518,7 +546,8 @@ Push 後 Render 會自動重新部署。
 
 | 項目 | 說明 | 優先 |
 |------|------|------|
-| 104 skills 欄位空 | `tags` 是工作特性碼（wf*），非技能；需抓 detail API | P2 |
-| AI 結果未 cache | 每次開詳情頁都重新呼叫 AI（或計算）| P2 |
-| Yourator description 只用 name | 完整描述需另呼叫 detail API | P3 |
-| 1111 / LinkedIn 爬蟲 | 未評估（1111）/ 受限（LinkedIn API）| P3 |
+| 1111 skills / is_remote 空 | API 無此欄位，需另解析 detail 頁 | P3 |
+
+**已清償/關閉（2026-07-02）：** 104 skills（detail API）、AI cache（M6 已做）、
+Yourator description（JSON-LD）、1111 爬蟲（已上線）、
+LinkedIn（評估後不做：API 需 Partner 授權、網頁爬取違反 ToS）。

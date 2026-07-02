@@ -69,5 +69,11 @@ void main() {
       await tester.pumpWidget(_wrap(JobCard(job: _mockJob)));
       expect(find.text('LinkedIn'), findsOneWidget);
     });
+
+    testWidgets('shows 1111 source badge with display name', (tester) async {
+      await tester.pumpWidget(
+          _wrap(JobCard(job: _mockJob.copyWith(source: '1111'))));
+      expect(find.text('1111人力銀行'), findsOneWidget);
+    });
   });
 }
