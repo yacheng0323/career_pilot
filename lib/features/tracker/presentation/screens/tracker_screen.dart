@@ -5,6 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../../jobs/domain/job.dart';
 import '../../../jobs/presentation/providers/apply_status_provider.dart';
 import '../../../jobs/presentation/providers/job_list_provider.dart';
+import '../../domain/job_memo.dart';
+import '../providers/job_memo_provider.dart';
+import '../widgets/memo_card.dart' show formatInterviewAt;
+
+Color urgencyColor(InterviewUrgency urgency) => switch (urgency) {
+      InterviewUrgency.past => const Color(0xFF9CA3AF),
+      InterviewUrgency.imminent => const Color(0xFFEF4444),
+      InterviewUrgency.soon => const Color(0xFFF97316),
+      InterviewUrgency.scheduled => const Color(0xFF3B82F6),
+    };
 
 const _columns = [
   (status: ApplyStatus.wantToApply, label: '想投',  color: Color(0xFF3B82F6)),
@@ -33,21 +43,29 @@ class TrackerScreen extends ConsumerWidget {
 
           if (tracked.isEmpty) return const _EmptyTracker();
 
-          return ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(12),
-            children: _columns.map((col) {
-              final colJobs = tracked.where((j) {
-                final s = ref.read(applyStatusNotifierProvider(j.id)).valueOrNull;
-                return s == col.status;
-              }).toList();
-              return _KanbanColumn(
-                label: col.label,
-                color: col.color,
-                status: col.status,
-                jobs: colJobs,
-              );
-            }).toList(),
+          return Column(
+            children: [
+              _UpcomingBanner(jobs: tracked),
+              Expanded(
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.all(12),
+                  children: _columns.map((col) {
+                    final colJobs = tracked.where((j) {
+                      final s =
+                          ref.read(applyStatusNotifierProvider(j.id)).valueOrNull;
+                      return s == col.status;
+                    }).toList();
+                    return _KanbanColumn(
+                      label: col.label,
+                      color: col.color,
+                      status: col.status,
+                      jobs: colJobs,
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -154,14 +172,16 @@ class _KanbanCard extends StatelessWidget {
   }
 }
 
-class _CardContent extends StatelessWidget {
+class _CardContent extends ConsumerWidget {
   const _CardContent({required this.job});
   final Job job;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final memo = ref.watch(jobMemoNotifierProvider(job.id)).valueOrNull;
+    final interviewAt = memo?.interviewAt;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -186,8 +206,104 @@ class _CardContent extends StatelessWidget {
                     overflow: TextOverflow.ellipsis),
               ),
             ]),
+            if (interviewAt != null) ...[
+              const SizedBox(height: 6),
+              _InterviewChip(interviewAt: interviewAt),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InterviewChip extends StatelessWidget {
+  const _InterviewChip({required this.interviewAt});
+  final DateTime interviewAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = urgencyColor(interviewUrgency(interviewAt, DateTime.now()));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.event, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            '面試 ${formatInterviewAt(interviewAt)}',
+            style: TextStyle(
+                fontSize: 11, color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 未來 7 天內有面試的職缺提醒。
+class _UpcomingBanner extends ConsumerWidget {
+  const _UpcomingBanner({required this.jobs});
+  final List<Job> jobs;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final upcoming = <({Job job, DateTime at})>[];
+    for (final job in jobs) {
+      final at =
+          ref.watch(jobMemoNotifierProvider(job.id)).valueOrNull?.interviewAt;
+      if (at == null) continue;
+      final urgency = interviewUrgency(at, now);
+      if (urgency == InterviewUrgency.imminent ||
+          urgency == InterviewUrgency.soon) {
+        upcoming.add((job: job, at: at));
+      }
+    }
+    if (upcoming.isEmpty) return const SizedBox.shrink();
+    upcoming.sort((a, b) => a.at.compareTo(b.at));
+
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.tertiaryContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notifications_active_outlined,
+                  size: 16, color: colors.onTertiaryContainer),
+              const SizedBox(width: 6),
+              Text('即將面試',
+                  style: textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.onTertiaryContainer)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ...upcoming.map((e) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '${formatInterviewAt(e.at)}　${e.job.title}｜${e.job.company}',
+                  style: textTheme.bodySmall
+                      ?.copyWith(color: colors.onTertiaryContainer),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )),
+        ],
       ),
     );
   }

@@ -1,5 +1,5 @@
 /// 職缺備忘錄：自由文字筆記 + 選填的面試日期。
-/// 以 JSON 存於 SharedPreferences（key: job_memo_<jobId>）。
+/// 以 JSON 存於 SharedPreferences（key: `job_memo_<jobId>`）。
 class JobMemo {
   const JobMemo({this.note = '', this.interviewAt});
 
